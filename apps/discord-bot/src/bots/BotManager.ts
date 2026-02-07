@@ -1,0 +1,136 @@
+import { CharacterBot } from './CharacterBot.js';
+import { characters, botConfig } from '../config/index.js';
+import { CharacterType } from '../types/index.js';
+
+/**
+ * 複数のBotを管理するマネージャークラス
+ */
+export class BotManager {
+  private bots: Map<CharacterType, CharacterBot> = new Map();
+  private isRunning: boolean = false;
+
+  /**
+   * 全Botの初期化とログイン
+   */
+  async initialize(): Promise<void> {
+    console.log('🚀 Botマネージャーを初期化中...');
+
+    try {
+      // 各キャラクターのBotを作成
+      for (const config of characters) {
+        const bot = new CharacterBot(config);
+        this.bots.set(config.type, bot);
+      }
+
+      // 順次ログイン（並列だとレート制限に引っかかる可能性あり）
+      for (const [type, bot] of this.bots) {
+        await bot.login();
+        // 少し待機
+        await this.sleep(1000);
+      }
+
+      this.isRunning = true;
+      console.log('✅ 全Botのログインが完了しました');
+
+      // 準備完了まで待機
+      await this.waitForAllBotsReady();
+      console.log('✅ 全Botの準備が完了しました');
+
+    } catch (error) {
+      console.error('❌ Botの初期化に失敗しました:', error);
+      await this.shutdown();
+      throw error;
+    }
+  }
+
+  /**
+   * 全Botの準備完了を待機
+   */
+  private async waitForAllBotsReady(): Promise<void> {
+    const maxWaitTime = 30000; // 30秒
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < maxWaitTime) {
+      const allReady = Array.from(this.bots.values()).every(bot => bot.isClientReady());
+      if (allReady) {
+        return;
+      }
+      await this.sleep(500);
+    }
+
+    throw new Error('Botの準備がタイムアウトしました');
+  }
+
+  /**
+   * 指定したキャラクターのBotを取得
+   */
+  getBot(type: CharacterType): CharacterBot | undefined {
+    return this.bots.get(type);
+  }
+
+  /**
+   * 全Botを取得
+   */
+  getAllBots(): CharacterBot[] {
+    return Array.from(this.bots.values());
+  }
+
+  /**
+   * 指定チャンネルにメッセージを送信
+   */
+  async sendMessage(characterType: CharacterType, content: string): Promise<void> {
+    const bot = this.getBot(characterType);
+    if (!bot) {
+      console.error(`❌ Bot ${characterType} が見つかりません`);
+      return;
+    }
+
+    await bot.sendMessage(botConfig.channelId, content);
+  }
+
+  /**
+   * テストメッセージを送信
+   */
+  async sendTestMessages(): Promise<void> {
+    console.log('📨 テストメッセージを送信中...');
+
+    await this.sendMessage('usako', 'よろしく...');
+    await this.sleep(2000);
+
+    await this.sendMessage('nekoko', 'わーい！みんなよろしくね～！');
+    await this.sleep(2000);
+
+    await this.sendMessage('keroko', 'こんにちは。けろこです。');
+
+    console.log('✅ テストメッセージの送信が完了しました');
+  }
+
+  /**
+   * 全Botのシャットダウン
+   */
+  async shutdown(): Promise<void> {
+    console.log('🛑 全Botをシャットダウン中...');
+    this.isRunning = false;
+
+    for (const bot of this.bots.values()) {
+      await bot.shutdown();
+    }
+
+    this.bots.clear();
+    console.log('✅ 全Botのシャットダウンが完了しました');
+  }
+
+  /**
+   * 実行中かどうか
+   */
+  isActive(): boolean {
+    return this.isRunning;
+  }
+
+  /**
+   * スリープ
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
