@@ -49,4 +49,33 @@ export interface BotConfig {
 export interface OllamaConfig {
   baseUrl: string;
   model: string;
+  temperature: number;
+  topP: number;
+  repeatPenalty: number;
+  maxTokens: number;
+}
+
+/**
+ * LLM生成リクエスト
+ */
+export interface GenerateRequest {
+  model: string;
+  prompt: string;
+  stream?: boolean;
+  options?: {
+    temperature?: number;
+    top_p?: number;
+    repeat_penalty?: number;
+    num_predict?: number;
+  };
+}
+
+/**
+ * LLM生成レスポンス
+ */
+export interface GenerateResponse {
+  model: string;
+  created_at: string;
+  response: string;
+  done: boolean;
 }

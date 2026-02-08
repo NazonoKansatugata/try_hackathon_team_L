@@ -62,4 +62,8 @@ export const botConfig: BotConfig = {
 export const ollamaConfig: OllamaConfig = {
   baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
   model: process.env.OLLAMA_MODEL || 'qwen3.0',
+  temperature: parseFloat(process.env.OLLAMA_TEMPERATURE || '0.8'),
+  topP: parseFloat(process.env.OLLAMA_TOP_P || '0.9'),
+  repeatPenalty: parseFloat(process.env.OLLAMA_REPEAT_PENALTY || '1.1'),
+  maxTokens: parseInt(process.env.OLLAMA_MAX_TOKENS || '150'),
 };
