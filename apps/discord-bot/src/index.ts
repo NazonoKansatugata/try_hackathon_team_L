@@ -27,12 +27,12 @@ async function main() {
     // Bot初期化
     await manager.initialize();
 
-    // 自律会話を開始
+    // 自律会話を開始（テーマはFirestoreから自動取得）
     console.log('\n🤖 5秒後に自律会話を開始します...');
     await sleep(5000);
     
-    // 初期メッセージ付きで自律会話開始
-    await manager.startAutonomousConversation('ねえねえ、今日は何して遊ぶ〜？');
+    // テーマを自動取得して会話開始
+    await manager.startAutonomousConversation();
 
     console.log('\n✅ 自律会話が終了しました');
     console.log('💡 Ctrl+C で終了できます\n');

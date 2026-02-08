@@ -4,6 +4,9 @@ import { CharacterType } from '../types/index.js';
 import { OllamaClient } from '../ollama/client.js';
 import { PromptBuilder } from '../llm/promptBuilder.js';
 import { ConversationHistory } from '../conversation/history.js';
+import { initializeFirebase, getRandomTheme } from '../firebase/firestore.js';
+import { ThemeContext } from '../llm/themeContext.js';
+import { Theme } from '../types/index.js';
 
 /**
  * 複数のBotを管理するマネージャークラス
@@ -12,10 +15,11 @@ export class BotManager {
   private bots: Map<CharacterType, CharacterBot> = new Map();
   private isRunning: boolean = false;
   private isConversationActive: boolean = false;
-  private ollamaClient: OllamaClient;
-  private conversationHistory: ConversationHistory;
   private consecutiveFailures: number = 0;
   private readonly MAX_CONSECUTIVE_FAILURES = 3;
+  private ollamaClient: OllamaClient;
+  private conversationHistory: ConversationHistory;
+  private themeContext: ThemeContext | null = null;
 
   constructor() {
     this.ollamaClient = new OllamaClient();
@@ -57,6 +61,11 @@ export class BotManager {
       } else {
         console.log('✅ Ollamaに接続しました');
       }
+
+      // Firebase初期化
+      console.log('🔥 Firebaseを初期化中...');
+      initializeFirebase();
+      console.log('✅ Firebaseを初期化しました');
 
     } catch (error) {
       console.error('❌ Botの初期化に失敗しました:', error);
@@ -164,12 +173,17 @@ export class BotManager {
       console.log(`🤔 ${characterType} が考え中...`);
 
       // プロンプト構築
-      const prompt = PromptBuilder.buildConversationPrompt(
+      let prompt = PromptBuilder.buildConversationPrompt(
         characterType,
         this.conversationHistory.getRecent(10),
         theme,
         botConfig.kerokoPersonality
       );
+
+      // テーマコンテキストを適用
+      if (this.themeContext) {
+        prompt = this.themeContext.expandPrompt(prompt);
+      }
 
       // LLMで生成（maxTokens指定なし = 設定ファイルのデフォルト値を使用）
       const generatedText = await this.ollamaClient.generate(prompt);
@@ -215,6 +229,15 @@ export class BotManager {
     this.isConversationActive = true;
     this.consecutiveFailures = 0; // カウンターをリセット
     console.log('🎭 自律会話を開始します...\n');
+
+    // Firestoreからランダムなテーマを取得
+    try {
+      const theme = await getRandomTheme();
+      this.themeContext = new ThemeContext(theme);
+    } catch (error) {
+      console.warn('⚠️ テーマ取得に失敗しました:', error);
+      this.themeContext = null;
+    }
 
     // 初期メッセージがあれば送信
     let lastSpeaker: CharacterType | null = null;

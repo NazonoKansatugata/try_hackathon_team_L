@@ -1,4 +1,15 @@
 /**
+ * お題データ
+ */
+export interface Theme {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  keywords: string[];
+}
+
+/**
  * キャラクターの種類
  */
 export type CharacterType = 'usako' | 'nekoko' | 'keroko';
