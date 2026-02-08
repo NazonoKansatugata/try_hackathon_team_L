@@ -203,26 +203,26 @@ export class BotManager {
     console.log('🎭 自律会話を開始します...\n');
 
     // 初期メッセージがあれば送信
+    let lastSpeaker: CharacterType | null = null;
+    
     if (initialMessage) {
       await this.sendMessage('nekoko', initialMessage);
       this.conversationHistory.addMessage('nekoko', initialMessage);
+      lastSpeaker = 'nekoko';
       await this.sleep(2000);
     }
-
-    // キャラクターの順番
-    const characterOrder: CharacterType[] = ['usako', 'nekoko', 'keroko'];
-    let currentIndex = 0;
 
     // 会話ループ
     while (this.isConversationActive && this.isRunning) {
       try {
-        const currentCharacter = characterOrder[currentIndex];
+        // 前回話したキャラクター以外からランダムに選択
+        const nextCharacter = this.selectNextCharacter(lastSpeaker);
         
         // LLMで発言生成＆送信
-        await this.generateAndSendMessage(currentCharacter);
+        await this.generateAndSendMessage(nextCharacter);
         
-        // 次のキャラクターへ
-        currentIndex = (currentIndex + 1) % characterOrder.length;
+        // 次のために記憶
+        lastSpeaker = nextCharacter;
         
         // 少し待機（LLM生成時間が主な間隔になる）
         await this.sleep(1500);
@@ -235,6 +235,23 @@ export class BotManager {
     }
 
     console.log('🛑 自律会話を停止しました');
+  }
+
+  /**
+   * 次に発言するキャラクターをランダムに選択
+   * 前回話したキャラクター以外から選ぶ
+   */
+  private selectNextCharacter(lastSpeaker: CharacterType | null): CharacterType {
+    const allCharacters: CharacterType[] = ['usako', 'nekoko', 'keroko'];
+    
+    // 前回話したキャラクターを除外
+    const candidates = lastSpeaker 
+      ? allCharacters.filter(c => c !== lastSpeaker)
+      : allCharacters;
+    
+    // ランダムに選択
+    const randomIndex = Math.floor(Math.random() * candidates.length);
+    return candidates[randomIndex];
   }
 
   /**
