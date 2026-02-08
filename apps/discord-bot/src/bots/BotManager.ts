@@ -14,6 +14,8 @@ export class BotManager {
   private isConversationActive: boolean = false;
   private ollamaClient: OllamaClient;
   private conversationHistory: ConversationHistory;
+  private consecutiveFailures: number = 0;
+  private readonly MAX_CONSECUTIVE_FAILURES = 3;
 
   constructor() {
     this.ollamaClient = new OllamaClient();
@@ -152,11 +154,12 @@ export class BotManager {
 
   /**
    * LLMで発言を生成してDiscordに送信
+   * @returns 成功したらtrue、失敗したらfalse
    */
   async generateAndSendMessage(
     characterType: CharacterType,
     theme?: string
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       console.log(`🤔 ${characterType} が考え中...`);
 
@@ -177,8 +180,16 @@ export class BotManager {
       // 履歴に追加
       this.conversationHistory.addMessage(characterType, generatedText);
 
+      // 成功したので失敗カウンターをリセット
+      this.consecutiveFailures = 0;
+      return true;
+
     } catch (error) {
       console.error(`❌ ${characterType} の発言生成に失敗:`, error);
+      
+      // 失敗カウンターを増やす
+      this.consecutiveFailures++;
+      console.error(`⚠️ 連続失敗回数: ${this.consecutiveFailures}/${this.MAX_CONSECUTIVE_FAILURES}`);
       
       // フォールバック（LLM失敗時のデフォルト発言）
       const fallbackMessages = {
@@ -188,6 +199,7 @@ export class BotManager {
       };
       
       await this.sendMessage(characterType, fallbackMessages[characterType]);
+      return false;
     }
   }
 
@@ -201,6 +213,7 @@ export class BotManager {
     }
 
     this.isConversationActive = true;
+    this.consecutiveFailures = 0; // カウンターをリセット
     console.log('🎭 自律会話を開始します...\n');
 
     // 初期メッセージがあれば送信
@@ -216,6 +229,14 @@ export class BotManager {
     // 会話ループ
     while (this.isConversationActive && this.isRunning) {
       try {
+        // 連続失敗チェック
+        if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES) {
+          console.error(`\n🛑 Ollamaリクエストが${this.MAX_CONSECUTIVE_FAILURES}回連続で失敗しました`);
+          console.error('⚠️ 自律会話を停止します\n');
+          this.stopAutonomousConversation();
+          break;
+        }
+
         // 前回話したキャラクター以外からランダムに選択
         const nextCharacter = this.selectNextCharacter(lastSpeaker);
         
