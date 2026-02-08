@@ -1,9 +1,12 @@
 import { CharacterBot } from './CharacterBot.js';
 import { characters, botConfig } from '../config/index.js';
-import { CharacterType } from '../types/index.js';
+import { CharacterType, DailyReport } from '../types/index.js';
 import { OllamaClient } from '../ollama/client.js';
 import { PromptBuilder } from '../llm/promptBuilder.js';
 import { ConversationHistory } from '../conversation/history.js';
+import { initializeFirebase, getRandomTheme, saveDailyReport } from '../firebase/firestore.js';
+import { ThemeContext } from '../llm/themeContext.js';
+import { Theme } from '../types/index.js';
 
 /**
  * 複数のBotを管理するマネージャークラス
@@ -12,14 +15,18 @@ export class BotManager {
   private bots: Map<CharacterType, CharacterBot> = new Map();
   private isRunning: boolean = false;
   private isConversationActive: boolean = false;
-  private ollamaClient: OllamaClient;
-  private conversationHistory: ConversationHistory;
   private consecutiveFailures: number = 0;
   private readonly MAX_CONSECUTIVE_FAILURES = 3;
+  private conversationTurnCount: number = 0;
+  private readonly SCENARIO_UPDATE_INTERVAL = 20;
+  private readonly REPORT_THRESHOLD = 50; // レポート生成する会話数(いづれ消す)
+  private ollamaClient: OllamaClient;
+  private conversationHistory: ConversationHistory;
+  private themeContext: ThemeContext | null = null;
 
   constructor() {
     this.ollamaClient = new OllamaClient();
-    this.conversationHistory = new ConversationHistory(20);
+    this.conversationHistory = new ConversationHistory();
   }
 
   /**
@@ -57,6 +64,11 @@ export class BotManager {
       } else {
         console.log('✅ Ollamaに接続しました');
       }
+
+      // Firebase初期化
+      console.log('🔥 Firebaseを初期化中...');
+      initializeFirebase();
+      console.log('✅ Firebaseを初期化しました');
 
     } catch (error) {
       console.error('❌ Botの初期化に失敗しました:', error);
@@ -164,12 +176,17 @@ export class BotManager {
       console.log(`🤔 ${characterType} が考え中...`);
 
       // プロンプト構築
-      const prompt = PromptBuilder.buildConversationPrompt(
+      let prompt = PromptBuilder.buildConversationPrompt(
         characterType,
         this.conversationHistory.getRecent(10),
         theme,
         botConfig.kerokoPersonality
       );
+
+      // テーマコンテキストを適用
+      if (this.themeContext) {
+        prompt = this.themeContext.expandPrompt(prompt);
+      }
 
       // LLMで生成（maxTokens指定なし = 設定ファイルのデフォルト値を使用）
       const generatedText = await this.ollamaClient.generate(prompt);
@@ -182,6 +199,25 @@ export class BotManager {
 
       // 成功したので失敗カウンターをリセット
       this.consecutiveFailures = 0;
+      
+      // ターンカウンターを増やす
+      this.conversationTurnCount++;
+      
+      // 20ターンごとにシナリオを更新
+      if (this.conversationTurnCount % this.SCENARIO_UPDATE_INTERVAL === 0 && this.themeContext) {
+        console.log(`\n📊 ${this.conversationTurnCount}ターン経過、シナリオを更新します...\n`);
+        const recentMessages = this.formatRecentMessagesForUpdate();
+        await this.themeContext.updateScenario(recentMessages);
+      }
+      
+      // 会話履歴が50個に達したらレポート生成
+      if (this.conversationHistory.getCount() >= this.REPORT_THRESHOLD) {
+        console.log(`\n📚 会話履歴が${this.REPORT_THRESHOLD}個に達しました。日報を生成します...\n`);
+        await this.generateDailyReports();
+        // レポート生成後、会話を停止
+        this.stopAutonomousConversation();
+      }
+      
       return true;
 
     } catch (error) {
@@ -214,16 +250,37 @@ export class BotManager {
 
     this.isConversationActive = true;
     this.consecutiveFailures = 0; // カウンターをリセット
+    this.conversationTurnCount = 0; // ターンカウンターをリセット
     console.log('🎭 自律会話を開始します...\n');
 
-    // 初期メッセージがあれば送信
+    // Firestoreからランダムなテーマを取得
+    try {
+      const theme = await getRandomTheme();
+      this.themeContext = new ThemeContext(theme);
+      
+      // テーマの会話シナリオを生成
+      await this.themeContext.generateScenario();
+      
+    } catch (error) {
+      console.warn('⚠️ テーマ取得またはシナリオ生成に失敗しました:', error);
+      this.themeContext = null;
+    }
+
+    // 初期メッセージまたはシナリオベースの会話開始
     let lastSpeaker: CharacterType | null = null;
     
     if (initialMessage) {
+      // 手動指定のメッセージがあれば使用
       await this.sendMessage('nekoko', initialMessage);
       this.conversationHistory.addMessage('nekoko', initialMessage);
       lastSpeaker = 'nekoko';
       await this.sleep(2000);
+    } else if (this.themeContext && this.themeContext.getScenario()) {
+      // シナリオが生成されている場合、ここで最初のキャラクターが自動的に発言
+      console.log('💬 シナリオに基づいて会話を開始します...\n');
+      lastSpeaker = null; // ランダムに誰かが最初に話す
+    } else {
+      console.log('⚠️ テーマもinitialMessageも指定されていません');
     }
 
     // 会話ループ
@@ -294,6 +351,81 @@ export class BotManager {
    */
   isConversationRunning(): boolean {
     return this.isConversationActive;
+  }
+
+  /**
+   * 直近の会話履歴をシナリオ更新用にフォーマット
+   */
+  private formatRecentMessagesForUpdate(): string {
+    const recentMessages = this.conversationHistory.getRecent(10);
+    return recentMessages
+      .map(msg => `${msg.characterType}: ${msg.content}`)
+      .join('\n');
+  }
+
+  /**
+   * キャラクターごとに日報を生成してFirestoreに保存
+   */
+  async generateDailyReports(): Promise<void> {
+    console.log('\n📝 ========== 日報生成開始 ==========\n');
+    
+    const allMessages = this.conversationHistory.getAll();
+    const conversationText = allMessages
+      .map(msg => `${msg.characterType}: ${msg.content}`)
+      .join('\n');
+    
+    const characterTypes: CharacterType[] = ['usako', 'nekoko', 'keroko'];
+    
+    for (const characterType of characterTypes) {
+      try {
+        const characterConfig = characters.find(c => c.type === characterType);
+        if (!characterConfig) continue;
+        
+        // 日記生成プロンプト
+        const diaryPrompt = `あなたは${characterConfig.displayName}です。
+
+今日の会話を振り返って、日記を書いてください。
+会話の内容を要約するのではなく、あなた自身の気持ちや感想を中心に、日記らしい文体で書いてください。
+
+【今日の会話】
+${conversationText}
+
+【日記の書き方】
+- 一人称視点で書く
+- あなたのキャラクター性を活かした文体で
+- 会話で印象的だったこと、楽しかったこと、考えたことなどを記述
+- 長さは200文字程度
+
+では、日記を書いてください：`;
+
+        console.log(`✍️ ${characterConfig.displayName}の日記を生成中...`);
+        
+        const diaryContent = await this.ollamaClient.generate(diaryPrompt, {
+          maxTokens: 300,
+        });
+        
+        // Firestoreに保存
+        const report: DailyReport = {
+          characterType,
+          characterName: characterConfig.displayName,
+          content: diaryContent,
+          timestamp: new Date(),
+          messageCount: allMessages.length,
+        };
+        
+        await saveDailyReport(report);
+        console.log(`✅ ${characterConfig.displayName}の日記を保存しました\n`);
+        
+      } catch (error) {
+        console.error(`❌ ${characterType}の日記生成に失敗:`, error);
+      }
+    }
+    
+    console.log('📝 ========== 日報生成完了 ==========\n');
+    
+    // 会話履歴を初期化
+    this.conversationHistory.clear();
+    console.log('🗑️ 会話履歴を初期化しました\n');
   }
 
   /**

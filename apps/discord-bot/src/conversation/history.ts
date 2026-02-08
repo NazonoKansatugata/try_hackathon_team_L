@@ -2,13 +2,13 @@ import { ConversationMessage, CharacterType } from '../types/index.js';
 
 /**
  * 会話履歴マネージャー
+ * 全ての会話履歴を保持（無制限）
  */
 export class ConversationHistory {
   private messages: ConversationMessage[] = [];
-  private maxMessages: number;
 
-  constructor(maxMessages: number = 20) {
-    this.maxMessages = maxMessages;
+  constructor() {
+    // 履歴は無制限に保持
   }
 
   /**
@@ -28,11 +28,6 @@ export class ConversationHistory {
     };
 
     this.messages.push(message);
-
-    // 最大件数を超えたら古いものから削除
-    if (this.messages.length > this.maxMessages) {
-      this.messages = this.messages.slice(-this.maxMessages);
-    }
 
     console.log(`📝 履歴追加: [${isHuman ? 'ユーザー' : characterType}] ${content}`);
   }

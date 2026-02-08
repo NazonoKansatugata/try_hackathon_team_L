@@ -1,4 +1,15 @@
 /**
+ * お題データ
+ */
+export interface Theme {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  keywords: string[];
+}
+
+/**
  * キャラクターの種類
  */
 export type CharacterType = 'usako' | 'nekoko' | 'keroko';
@@ -81,4 +92,16 @@ export interface GenerateResponse {
   thinking?: string;  // qwen3のthinking mode対応
   done: boolean;
   done_reason?: string;
+}
+
+/**
+ * 日報レポート
+ */
+export interface DailyReport {
+  id?: string;
+  characterType: CharacterType;
+  characterName: string;
+  content: string;
+  timestamp: Date;
+  messageCount: number;
 }
