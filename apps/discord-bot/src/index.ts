@@ -32,6 +32,11 @@ async function main() {
     await sleep(5000);
     await manager.sendTestMessages();
 
+    // LLM会話テスト
+    console.log('\n🤖 10秒後にLLM会話テストを開始します...');
+    await sleep(10000);
+    await manager.testLLMConversation();
+
     console.log('\n✅ Bot起動完了！');
     console.log('💡 Ctrl+C で終了できます\n');
 

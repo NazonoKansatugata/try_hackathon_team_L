@@ -1,6 +1,9 @@
 import { CharacterBot } from './CharacterBot.js';
 import { characters, botConfig } from '../config/index.js';
 import { CharacterType } from '../types/index.js';
+import { OllamaClient } from '../ollama/client.js';
+import { PromptBuilder } from '../llm/promptBuilder.js';
+import { ConversationHistory } from '../conversation/history.js';
 
 /**
  * 複数のBotを管理するマネージャークラス
@@ -8,6 +11,13 @@ import { CharacterType } from '../types/index.js';
 export class BotManager {
   private bots: Map<CharacterType, CharacterBot> = new Map();
   private isRunning: boolean = false;
+  private ollamaClient: OllamaClient;
+  private conversationHistory: ConversationHistory;
+
+  constructor() {
+    this.ollamaClient = new OllamaClient();
+    this.conversationHistory = new ConversationHistory(20);
+  }
 
   /**
    * 全Botの初期化とログイン
@@ -35,6 +45,15 @@ export class BotManager {
       // 準備完了まで待機
       await this.waitForAllBotsReady();
       console.log('✅ 全Botの準備が完了しました');
+
+      // Ollama接続確認
+      console.log('🔌 Ollamaに接続中...');
+      const isOllamaHealthy = await this.ollamaClient.healthCheck();
+      if (!isOllamaHealthy) {
+        console.warn('⚠️ Ollamaへの接続に失敗しました。LLM機能は使用できません。');
+      } else {
+        console.log('✅ Ollamaに接続しました');
+      }
 
     } catch (error) {
       console.error('❌ Botの初期化に失敗しました:', error);
@@ -103,6 +122,71 @@ export class BotManager {
     await this.sendMessage('keroko', 'こんにちは。けろこです。');
 
     console.log('✅ テストメッセージの送信が完了しました');
+  }
+
+  /**
+   * LLMを使った会話生成テスト
+   */
+  async testLLMConversation(): Promise<void> {
+    console.log('\n🧪 LLM会話生成テストを開始...\n');
+
+    // 初期メッセージ
+    await this.sendMessage('nekoko', 'ねえねえ、今日は何して遊ぶ〜？');
+    this.conversationHistory.addMessage('nekoko', 'ねえねえ、今日は何して遊ぶ〜？');
+    await this.sleep(3000);
+
+    // うさこが応答（LLM生成）
+    await this.generateAndSendMessage('usako');
+    await this.sleep(3000);
+
+    // けろこが応答（LLM生成）
+    await this.generateAndSendMessage('keroko');
+    await this.sleep(3000);
+
+    // ねここが応答（LLM生成）
+    await this.generateAndSendMessage('nekoko');
+
+    console.log('\n✅ LLM会話生成テストが完了しました');
+  }
+
+  /**
+   * LLMで発言を生成してDiscordに送信
+   */
+  async generateAndSendMessage(
+    characterType: CharacterType,
+    theme?: string
+  ): Promise<void> {
+    try {
+      console.log(`🤔 ${characterType} が考え中...`);
+
+      // プロンプト構築
+      const prompt = PromptBuilder.buildConversationPrompt(
+        characterType,
+        this.conversationHistory.getRecent(10),
+        theme
+      );
+
+      // LLMで生成（maxTokens指定なし = 設定ファイルのデフォルト値を使用）
+      const generatedText = await this.ollamaClient.generate(prompt);
+
+      // Discord に送信
+      await this.sendMessage(characterType, generatedText);
+
+      // 履歴に追加
+      this.conversationHistory.addMessage(characterType, generatedText);
+
+    } catch (error) {
+      console.error(`❌ ${characterType} の発言生成に失敗:`, error);
+      
+      // フォールバック（LLM失敗時のデフォルト発言）
+      const fallbackMessages = {
+        usako: '...',
+        nekoko: 'えっと...何だっけ？',
+        keroko: 'すみません、少し考え中です。',
+      };
+      
+      await this.sendMessage(characterType, fallbackMessages[characterType]);
+    }
   }
 
   /**

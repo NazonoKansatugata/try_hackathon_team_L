@@ -77,11 +77,16 @@ export class CharacterBot {
       return;
     }
 
+    // 空メッセージチェック
+    if (!content || content.trim().length === 0) {
+      console.error(`❌ ${this.config.displayName} が空メッセージを送信しようとしました`);
+      return;
+    }
+
     try {
       const channel = await this.client.channels.fetch(channelId);
       if (channel && channel.isTextBased()) {
         await (channel as TextChannel).send(content);
-        console.log(`💬 [${this.config.displayName}] ${content}`);
       }
     } catch (error) {
       console.error(`❌ ${this.config.displayName} のメッセージ送信に失敗:`, error);
