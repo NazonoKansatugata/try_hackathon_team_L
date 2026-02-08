@@ -11,6 +11,7 @@ import { ConversationHistory } from '../conversation/history.js';
 export class BotManager {
   private bots: Map<CharacterType, CharacterBot> = new Map();
   private isRunning: boolean = false;
+  private isConversationActive: boolean = false;
   private ollamaClient: OllamaClient;
   private conversationHistory: ConversationHistory;
 
@@ -190,10 +191,78 @@ export class BotManager {
   }
 
   /**
+   * 自律会話を開始
+   */
+  async startAutonomousConversation(initialMessage?: string): Promise<void> {
+    if (this.isConversationActive) {
+      console.log('⚠️ 既に会話が進行中です');
+      return;
+    }
+
+    this.isConversationActive = true;
+    console.log('🎭 自律会話を開始します...\n');
+
+    // 初期メッセージがあれば送信
+    if (initialMessage) {
+      await this.sendMessage('nekoko', initialMessage);
+      this.conversationHistory.addMessage('nekoko', initialMessage);
+      await this.sleep(2000);
+    }
+
+    // キャラクターの順番
+    const characterOrder: CharacterType[] = ['usako', 'nekoko', 'keroko'];
+    let currentIndex = 0;
+
+    // 会話ループ
+    while (this.isConversationActive && this.isRunning) {
+      try {
+        const currentCharacter = characterOrder[currentIndex];
+        
+        // LLMで発言生成＆送信
+        await this.generateAndSendMessage(currentCharacter);
+        
+        // 次のキャラクターへ
+        currentIndex = (currentIndex + 1) % characterOrder.length;
+        
+        // 少し待機（LLM生成時間が主な間隔になる）
+        await this.sleep(1500);
+        
+      } catch (error) {
+        console.error('❌ 自律会話中にエラーが発生:', error);
+        // エラーが発生しても会話を続ける
+        await this.sleep(3000);
+      }
+    }
+
+    console.log('🛑 自律会話を停止しました');
+  }
+
+  /**
+   * 自律会話を停止
+   */
+  stopAutonomousConversation(): void {
+    if (!this.isConversationActive) {
+      console.log('⚠️ 会話は既に停止しています');
+      return;
+    }
+    
+    console.log('⏸️ 自律会話を停止中...');
+    this.isConversationActive = false;
+  }
+
+  /**
+   * 会話が進行中かどうか
+   */
+  isConversationRunning(): boolean {
+    return this.isConversationActive;
+  }
+
+  /**
    * 全Botのシャットダウン
    */
   async shutdown(): Promise<void> {
     console.log('🛑 全Botをシャットダウン中...');
+    this.isConversationActive = false;
     this.isRunning = false;
 
     for (const bot of this.bots.values()) {
