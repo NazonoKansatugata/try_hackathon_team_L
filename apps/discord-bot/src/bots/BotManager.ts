@@ -17,13 +17,15 @@ export class BotManager {
   private isConversationActive: boolean = false;
   private consecutiveFailures: number = 0;
   private readonly MAX_CONSECUTIVE_FAILURES = 3;
+  private conversationTurnCount: number = 0;
+  private readonly SCENARIO_UPDATE_INTERVAL = 20;
   private ollamaClient: OllamaClient;
   private conversationHistory: ConversationHistory;
   private themeContext: ThemeContext | null = null;
 
   constructor() {
     this.ollamaClient = new OllamaClient();
-    this.conversationHistory = new ConversationHistory(20);
+    this.conversationHistory = new ConversationHistory();
   }
 
   /**
@@ -196,6 +198,17 @@ export class BotManager {
 
       // 成功したので失敗カウンターをリセット
       this.consecutiveFailures = 0;
+      
+      // ターンカウンターを増やす
+      this.conversationTurnCount++;
+      
+      // 20ターンごとにシナリオを更新
+      if (this.conversationTurnCount % this.SCENARIO_UPDATE_INTERVAL === 0 && this.themeContext) {
+        console.log(`\n📊 ${this.conversationTurnCount}ターン経過、シナリオを更新します...\n`);
+        const recentMessages = this.formatRecentMessagesForUpdate();
+        await this.themeContext.updateScenario(recentMessages);
+      }
+      
       return true;
 
     } catch (error) {
@@ -228,6 +241,7 @@ export class BotManager {
 
     this.isConversationActive = true;
     this.consecutiveFailures = 0; // カウンターをリセット
+    this.conversationTurnCount = 0; // ターンカウンターをリセット
     console.log('🎭 自律会話を開始します...\n');
 
     // Firestoreからランダムなテーマを取得
@@ -328,6 +342,16 @@ export class BotManager {
    */
   isConversationRunning(): boolean {
     return this.isConversationActive;
+  }
+
+  /**
+   * 直近の会話履歴をシナリオ更新用にフォーマット
+   */
+  private formatRecentMessagesForUpdate(): string {
+    const recentMessages = this.conversationHistory.getRecent(10);
+    return recentMessages
+      .map(msg => `${msg.characterType}: ${msg.content}`)
+      .join('\n');
   }
 
   /**

@@ -43,6 +43,32 @@ export class ThemeContext {
   }
 
   /**
+   * 会話履歴を踏まえてシナリオを更新
+   */
+  async updateScenario(recentMessages: string): Promise<void> {
+    const updatePrompt = `テーマ「${this.theme.title}」についての会話が進行しています。
+
+【現在のシナリオ】
+${this.scenario}
+
+【直近の会話】
+${recentMessages}
+
+上記の会話の流れを踏まえて、今後どのように会話を展開すべきか、新しいシナリオを簡潔に示してください（5文程度）。`;
+
+    try {
+      console.log('🔄 会話シナリオを更新中...');
+      this.scenario = await this.ollamaClient.generate(updatePrompt, {
+        maxTokens: 100,
+      });
+      console.log('✅ シナリオ更新完了');
+    } catch (error) {
+      console.error('❌ シナリオ更新失敗、現在のシナリオを維持:', error);
+      // 更新失敗時は現在のシナリオを維持
+    }
+  }
+
+  /**
    * テーマのシステムプロンプット
    */
   getSystemPrompt(): string {
