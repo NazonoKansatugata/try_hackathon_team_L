@@ -166,10 +166,8 @@ export class BotManager {
         theme
       );
 
-      // LLMで生成
-      const generatedText = await this.ollamaClient.generate(prompt, {
-        maxTokens: characterType === 'usako' ? 50 : 150, // うさこは短め
-      });
+      // LLMで生成（maxTokens指定なし = 設定ファイルのデフォルト値を使用）
+      const generatedText = await this.ollamaClient.generate(prompt);
 
       // Discord に送信
       await this.sendMessage(characterType, generatedText);

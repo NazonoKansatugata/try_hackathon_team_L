@@ -77,5 +77,7 @@ export interface GenerateResponse {
   model: string;
   created_at: string;
   response: string;
+  thinking?: string;  // qwen3のthinking mode対応
   done: boolean;
+  done_reason?: string;
 }

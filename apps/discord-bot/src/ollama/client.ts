@@ -45,8 +45,20 @@ export class OllamaClient {
         throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json() as GenerateResponse;
-      return data.response.trim();
+      const responseText = await response.text();
+      const data = JSON.parse(responseText) as GenerateResponse;
+      
+      // qwen3のthinking modeに対応: responseが空の場合はthinkingを使用
+      let generatedText = data.response.trim();
+      if (!generatedText && data.thinking) {
+        generatedText = data.thinking.trim();
+      }
+      
+      if (!generatedText) {
+        console.error('❌ Ollamaが空の応答を返しました。トークン数を増やしてください。');
+      }
+      
+      return generatedText;
 
     } catch (error) {
       console.error('❌ Ollama生成エラー:', error);
