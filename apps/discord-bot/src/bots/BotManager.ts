@@ -164,7 +164,8 @@ export class BotManager {
       const prompt = PromptBuilder.buildConversationPrompt(
         characterType,
         this.conversationHistory.getRecent(10),
-        theme
+        theme,
+        botConfig.kerokoPersonality
       );
 
       // LLMで生成（maxTokens指定なし = 設定ファイルのデフォルト値を使用）

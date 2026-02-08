@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { CharacterConfig, BotConfig, OllamaConfig } from '../types/index.js';
+import { CharacterConfig, BotConfig, OllamaConfig, KerokoPersonality } from '../types/index.js';
 
 config();
 
@@ -54,6 +54,7 @@ export const botConfig: BotConfig = {
   autoConversationEndHour: parseInt(process.env.AUTO_CONVERSATION_END_HOUR || '18'),
   messageIntervalMin: parseInt(process.env.MESSAGE_INTERVAL_MIN || '30'),
   messageIntervalMax: parseInt(process.env.MESSAGE_INTERVAL_MAX || '120'),
+  kerokoPersonality: (process.env.KEROKO_PERSONALITY || 'A') as KerokoPersonality,
 };
 
 /**
