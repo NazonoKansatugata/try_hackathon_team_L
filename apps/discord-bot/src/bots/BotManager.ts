@@ -234,19 +234,30 @@ export class BotManager {
     try {
       const theme = await getRandomTheme();
       this.themeContext = new ThemeContext(theme);
+      
+      // テーマの会話シナリオを生成
+      await this.themeContext.generateScenario();
+      
     } catch (error) {
-      console.warn('⚠️ テーマ取得に失敗しました:', error);
+      console.warn('⚠️ テーマ取得またはシナリオ生成に失敗しました:', error);
       this.themeContext = null;
     }
 
-    // 初期メッセージがあれば送信
+    // 初期メッセージまたはシナリオベースの会話開始
     let lastSpeaker: CharacterType | null = null;
     
     if (initialMessage) {
+      // 手動指定のメッセージがあれば使用
       await this.sendMessage('nekoko', initialMessage);
       this.conversationHistory.addMessage('nekoko', initialMessage);
       lastSpeaker = 'nekoko';
       await this.sleep(2000);
+    } else if (this.themeContext && this.themeContext.getScenario()) {
+      // シナリオが生成されている場合、ここで最初のキャラクターが自動的に発言
+      console.log('💬 シナリオに基づいて会話を開始します...\n');
+      lastSpeaker = null; // ランダムに誰かが最初に話す
+    } else {
+      console.log('⚠️ テーマもinitialMessageも指定されていません');
     }
 
     // 会話ループ
