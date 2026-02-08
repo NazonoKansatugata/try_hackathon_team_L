@@ -93,3 +93,15 @@ export interface GenerateResponse {
   done: boolean;
   done_reason?: string;
 }
+
+/**
+ * 日報レポート
+ */
+export interface DailyReport {
+  id?: string;
+  characterType: CharacterType;
+  characterName: string;
+  content: string;
+  timestamp: Date;
+  messageCount: number;
+}
