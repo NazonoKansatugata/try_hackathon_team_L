@@ -41,6 +41,7 @@ export interface BotConfig {
   autoConversationEndHour: number;
   messageIntervalMin: number;
   messageIntervalMax: number;
+  kerokoPersonality: KerokoPersonality;
 }
 
 /**
