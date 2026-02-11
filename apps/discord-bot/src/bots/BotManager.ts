@@ -19,7 +19,7 @@ export class BotManager {
   private readonly MAX_CONSECUTIVE_FAILURES = 3;
   private conversationTurnCount: number = 0;
   private readonly SCENARIO_UPDATE_INTERVAL = 20;
-  private readonly REPORT_THRESHOLD = 50; // レポート生成する会話数(いづれ消す)
+  private readonly REPORT_THRESHOLD = 30; // レポート生成する会話数(いづれ消す)
   private ollamaClient: OllamaClient;
   private conversationHistory: ConversationHistory;
   private themeContext: ThemeContext | null = null;
