@@ -31,9 +31,7 @@ export class ThemeContext {
 
     try {
       console.log('🧠 テーマの会話シナリオを生成中...');
-      this.scenario = await this.ollamaClient.generate(scenarioPrompt, {
-        maxTokens: 100, // 短めに制限
-      });
+      this.scenario = await this.ollamaClient.generate(scenarioPrompt);
       console.log('✅ シナリオ生成完了');
     } catch (error) {
       console.error('❌ シナリオ生成失敗、デフォルト使用:', error);
@@ -58,9 +56,7 @@ ${recentMessages}
 
     try {
       console.log('🔄 会話シナリオを更新中...');
-      this.scenario = await this.ollamaClient.generate(updatePrompt, {
-        maxTokens: 100,
-      });
+      this.scenario = await this.ollamaClient.generate(updatePrompt);
       console.log('✅ シナリオ更新完了');
     } catch (error) {
       console.error('❌ シナリオ更新失敗、現在のシナリオを維持:', error);
