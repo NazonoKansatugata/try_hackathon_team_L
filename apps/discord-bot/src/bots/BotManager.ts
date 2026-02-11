@@ -172,6 +172,10 @@ export class BotManager {
       // 会話履歴が50個に達したらレポート生成
       if (this.conversationHistory.getCount() >= this.REPORT_THRESHOLD) {
         console.log(`\n📚 会話履歴が${this.REPORT_THRESHOLD}個に達しました。日報を生成します...\n`);
+        
+        // レポート生成前にうさこから終了メッセージを送信
+        await this.sendMessage('usako', '今日はここまで...');
+        
         await this.generateDailyReports();
         // レポート生成後、会話を停止
         this.stopAutonomousConversation();
@@ -226,18 +230,19 @@ export class BotManager {
     }
 
     // 初期メッセージまたはシナリオベースの会話開始
-    let lastSpeaker: CharacterType | null = null;
+    // うさこを最初の発言者に固定
+    let lastSpeaker: CharacterType = 'usako';
     
     if (initialMessage) {
       // 手動指定のメッセージがあれば使用
-      await this.sendMessage('nekoko', initialMessage);
-      this.conversationHistory.addMessage('nekoko', initialMessage);
-      lastSpeaker = 'nekoko';
+      await this.sendMessage('usako', initialMessage);
+      this.conversationHistory.addMessage('usako', initialMessage);
       await this.sleep(2000);
     } else if (this.themeContext && this.themeContext.getScenario()) {
-      // シナリオが生成されている場合、ここで最初のキャラクターが自動的に発言
+      // シナリオが生成されている場合、うさこが最初に発言
       console.log('💬 シナリオに基づいて会話を開始します...\n');
-      lastSpeaker = null; // ランダムに誰かが最初に話す
+      await this.generateAndSendMessage('usako');
+      await this.sleep(2000);
     } else {
       console.log('⚠️ テーマもinitialMessageも指定されていません');
     }
