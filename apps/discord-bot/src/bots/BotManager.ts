@@ -6,7 +6,7 @@ import { PromptBuilder } from '../llm/promptBuilder.js';
 import { ConversationHistory } from '../conversation/history.js';
 import { initializeFirebase, getRandomTheme, saveDailyReport } from '../firebase/firestore.js';
 import { ThemeContext } from '../llm/themeContext.js';
-import { Theme } from '../types/index.js';
+import { ReportPromptBuilder } from '../llm/reportPromptBuilder.js';
 
 /**
  * 複数のBotを管理するマネージャークラス
@@ -364,71 +364,6 @@ export class BotManager {
   }
 
   /**
-   * キャラクターごとに日報を生成してFirestoreに保存
-   */
-  async generateDailyReports(): Promise<void> {
-    console.log('\n📝 ========== 日報生成開始 ==========\n');
-    
-    const allMessages = this.conversationHistory.getAll();
-    const conversationText = allMessages
-      .map(msg => `${msg.characterType}: ${msg.content}`)
-      .join('\n');
-    
-    const characterTypes: CharacterType[] = ['usako', 'nekoko', 'keroko'];
-    
-    for (const characterType of characterTypes) {
-      try {
-        const characterConfig = characters.find(c => c.type === characterType);
-        if (!characterConfig) continue;
-        
-        // 日記生成プロンプト
-        const diaryPrompt = `あなたは${characterConfig.displayName}です。
-
-今日の会話を振り返って、日記を書いてください。
-会話の内容を要約するのではなく、あなた自身の気持ちや感想を中心に、日記らしい文体で書いてください。
-
-【今日の会話】
-${conversationText}
-
-【日記の書き方】
-- 一人称視点で書く
-- あなたのキャラクター性を活かした文体で
-- 会話で印象的だったこと、楽しかったこと、考えたことなどを記述
-- 長さは200文字程度
-
-では、日記を書いてください：`;
-
-        console.log(`✍️ ${characterConfig.displayName}の日記を生成中...`);
-        
-        const diaryContent = await this.ollamaClient.generate(diaryPrompt, {
-          maxTokens: 300,
-        });
-        
-        // Firestoreに保存
-        const report: DailyReport = {
-          characterType,
-          characterName: characterConfig.displayName,
-          content: diaryContent,
-          timestamp: new Date(),
-          messageCount: allMessages.length,
-        };
-        
-        await saveDailyReport(report);
-        console.log(`✅ ${characterConfig.displayName}の日記を保存しました\n`);
-        
-      } catch (error) {
-        console.error(`❌ ${characterType}の日記生成に失敗:`, error);
-      }
-    }
-    
-    console.log('📝 ========== 日報生成完了 ==========\n');
-    
-    // 会話履歴を初期化
-    this.conversationHistory.clear();
-    console.log('🗑️ 会話履歴を初期化しました\n');
-  }
-
-  /**
    * 全Botのシャットダウン
    */
   async shutdown(): Promise<void> {
@@ -449,6 +384,47 @@ ${conversationText}
    */
   isActive(): boolean {
     return this.isRunning;
+  }
+
+  /**
+   * 全キャラクターの日報を生成して保存
+   */
+  private async generateDailyReports(): Promise<void> {
+    const characterTypes: CharacterType[] = ['usako', 'nekoko', 'keroko'];
+    const allMessages = this.conversationHistory.getAll();
+    const conversationText = allMessages
+      .map(msg => `${msg.characterType}: ${msg.content}`)
+      .join('\n');
+
+    for (const characterType of characterTypes) {
+      try {
+        console.log(`\n📝 ${characterType} の日報を生成中...`);
+        
+        const diaryPrompt = ReportPromptBuilder.buildDiaryPrompt(characterType, conversationText);
+        const diaryContent = await this.ollamaClient.generate(diaryPrompt);
+        
+        if (diaryContent && diaryContent.trim()) {
+          console.log(`✅ ${characterType} の日報を生成しました`);
+          
+          const report: DailyReport = {
+            characterType,
+            characterName: characters.find(c => c.type === characterType)?.name || characterType,
+            content: diaryContent,
+            timestamp: new Date(),
+            messageCount: allMessages.length,
+          };
+          
+          await saveDailyReport(report);
+        } else {
+          console.warn(`⚠️ ${characterType} の日報生成で空の結果が返ったため、スキップします`);
+        }
+      } catch (error) {
+        console.error(`❌ ${characterType} の日報生成に失敗:`, error);
+      }
+    }
+
+    // 会話履歴を初期化
+    this.conversationHistory.clear();
   }
 
   /**
