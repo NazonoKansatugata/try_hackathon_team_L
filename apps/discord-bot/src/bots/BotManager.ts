@@ -122,47 +122,6 @@ export class BotManager {
     await bot.sendMessage(botConfig.channelId, content);
   }
 
-  /**
-   * テストメッセージを送信
-   */
-  async sendTestMessages(): Promise<void> {
-    console.log('📨 テストメッセージを送信中...');
-
-    await this.sendMessage('usako', 'よろしく...');
-    await this.sleep(2000);
-
-    await this.sendMessage('nekoko', 'わーい！みんなよろしくね～！');
-    await this.sleep(2000);
-
-    await this.sendMessage('keroko', 'こんにちは。けろこです。');
-
-    console.log('✅ テストメッセージの送信が完了しました');
-  }
-
-  /**
-   * LLMを使った会話生成テスト
-   */
-  async testLLMConversation(): Promise<void> {
-    console.log('\n🧪 LLM会話生成テストを開始...\n');
-
-    // 初期メッセージ
-    await this.sendMessage('nekoko', 'ねえねえ、今日は何して遊ぶ〜？');
-    this.conversationHistory.addMessage('nekoko', 'ねえねえ、今日は何して遊ぶ〜？');
-    await this.sleep(3000);
-
-    // うさこが応答（LLM生成）
-    await this.generateAndSendMessage('usako');
-    await this.sleep(3000);
-
-    // けろこが応答（LLM生成）
-    await this.generateAndSendMessage('keroko');
-    await this.sleep(3000);
-
-    // ねここが応答（LLM生成）
-    await this.generateAndSendMessage('nekoko');
-
-    console.log('\n✅ LLM会話生成テストが完了しました');
-  }
 
   /**
    * LLMで発言を生成してDiscordに送信
