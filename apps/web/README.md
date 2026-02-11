@@ -1,4 +1,74 @@
-# React + TypeScript + Vite
+# Web フロントエンド (React + TypeScript + Vite)
+
+キャラクター紹介とレポート機能を持つWebアプリケーションです。
+
+## 🎭 キャラクター
+
+discord-botで使用されている3人のキャラクター：
+- **うさこ**: 主人公・ミステリアス担当（無口で寡黙）
+- **ねここ**: ムードメーカー（明るく元気）
+- **けろこ**: 性格切り替え可能（人格A/B）
+
+## 🚀 クイックスタート
+
+```bash
+# 依存関係のインストール
+npm install
+
+# 開発サーバーの起動
+npm run dev
+```
+
+ブラウザで http://localhost:5173 にアクセスしてください。
+
+## 📚 初心者向けタスク
+
+**[TASKS.md](./TASKS.md)** を参照してください。
+
+このプロジェクトでは、以下の2つの画面を実装します：
+- **キャラクター紹介画面** (`character-list/` - 担当者1)
+- **キャラクター別レポート画面** (`character-reports/` - 担当者2)
+
+それぞれ別のフォルダに分かれているので、並行作業が可能です。
+
+## 🗂️ プロジェクト構成
+
+```
+src/
+├── pages/              # ページコンポーネント
+│   ├── character-list/        # キャラクター一覧（担当者1）
+│   │   ├── CharacterList.tsx
+│   │   └── CharacterList.css
+│   └── character-reports/     # レポート画面（担当者2）
+│       ├── CharacterReports.tsx
+│       └── CharacterReports.css
+├── types/              # 型定義
+│   └── index.ts
+├── data/               # サンプルデータ
+│   └── sampleData.ts
+├── App.tsx             # ルーティング設定
+└── main.tsx            # エントリーポイント
+```
+
+## 🛠️ 利用可能なコマンド
+
+```bash
+npm run dev      # 開発サーバー起動
+npm run build    # プロダクションビルド
+npm run preview  # ビルド結果のプレビュー
+npm run lint     # ESLintでコードチェック
+```
+
+## 📖 技術スタック
+
+- **React 19** - UIライブラリ
+- **TypeScript** - 型安全な開発
+- **Vite** - 高速ビルドツール
+- **React Router** - ルーティング
+
+---
+
+## React + TypeScript + Vite について
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

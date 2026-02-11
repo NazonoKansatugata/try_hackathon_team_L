@@ -1,0 +1,62 @@
+.character-list {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.character-list h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.character-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  background: white;
+}
+
+.character-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.character-card h2 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+}
+
+.character-card p {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.character-card button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.character-card button:hover {
+  background-color: #2980b9;
+}
+
+.character-card.sample {
+  border: 2px dashed #3498db;
+  background-color: #f8f9fa;
+}
