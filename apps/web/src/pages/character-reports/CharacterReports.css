@@ -1,0 +1,82 @@
+.character-reports {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.back-button {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #3498db;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+
+.back-button:hover {
+  color: #2980b9;
+  text-decoration: underline;
+}
+
+.header h1 {
+  color: #2c3e50;
+  margin: 0;
+}
+
+.report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.report-entry {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: box-shadow 0.2s;
+}
+
+.report-entry:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.report-entry.sample {
+  border: 2px dashed #3498db;
+  background-color: #f8f9fa;
+}
+
+.report-header {
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #ecf0f1;
+  padding-bottom: 0.5rem;
+}
+
+.report-date {
+  display: inline-block;
+  background-color: #3498db;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.report-title {
+  margin: 0.5rem 0 0 0;
+  color: #2c3e50;
+  font-size: 1.5rem;
+}
+
+.report-content {
+  color: #555;
+  line-height: 1.8;
+}
+
+.report-content p {
+  margin: 0.5rem 0;
+}
