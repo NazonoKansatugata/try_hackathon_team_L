@@ -19,10 +19,13 @@ export class BotManager {
   private readonly MAX_CONSECUTIVE_FAILURES = 3;
   private conversationTurnCount: number = 0;
   private readonly SCENARIO_UPDATE_INTERVAL = 20;
-  private readonly REPORT_THRESHOLD = 30; // レポート生成する会話数(いづれ消す)
+  private readonly REPORT_THRESHOLD = 15; // レポート生成する会話数(いづれ消す)
   private ollamaClient: OllamaClient;
   private conversationHistory: ConversationHistory;
   private themeContext: ThemeContext | null = null;
+  private isGenerating: boolean = false;
+  private shouldCancelGeneration: boolean = false;
+  private humanInterventionData: { username: string; content: string } | null = null;
 
   constructor() {
     this.ollamaClient = new OllamaClient();
@@ -134,15 +137,14 @@ export class BotManager {
 
     console.log(`\n👤 人間が会話に介入しました: ${username}\n`);
 
-    // 会話履歴に追加（isHuman=trueで人間のメッセージとして記録）
-    this.conversationHistory.addMessage('usako', content, true);
+    // 生成中の場合はキャンセルフラグを立てる
+    if (this.isGenerating) {
+      console.log('⚠️ 生成中のリクエストをキャンセルします...');
+      this.shouldCancelGeneration = true;
+    }
 
-    // 少し待機してから次のキャラクターに発言させる
-    await this.sleep(2000);
-
-    // ランダムにキャラクターを選択して応答させる
-    const nextCharacter = this.selectNextCharacter(null);
-    await this.generateAndSendMessage(nextCharacter);
+    // 人間の介入データを保存
+    this.humanInterventionData = { username, content };
   }
 
   /**
@@ -167,6 +169,16 @@ export class BotManager {
     characterType: CharacterType,
     theme?: string
   ): Promise<boolean> {
+    // キャンセルフラグが立っていたら処理を中止
+    if (this.shouldCancelGeneration) {
+      console.log(`❌ ${characterType} の生成をキャンセルしました`);
+      this.shouldCancelGeneration = false;
+      this.isGenerating = false;
+      return false;
+    }
+
+    this.isGenerating = true;
+
     try {
       console.log(`🤔 ${characterType} が考え中...`);
 
@@ -189,6 +201,14 @@ export class BotManager {
 
       // LLMで生成（maxTokens指定なし = 設定ファイルのデフォルト値を使用）
       const generatedText = await this.ollamaClient.generate(prompt);
+
+      // キャンセルフラグが立ったら結果を破棄
+      if (this.shouldCancelGeneration) {
+        console.log(`❌ ${characterType} の生成をキャンセルしました`);
+        this.shouldCancelGeneration = false;
+        this.isGenerating = false;
+        return false;
+      }
 
       // Discord に送信
       await this.sendMessage(characterType, generatedText);
@@ -241,6 +261,8 @@ export class BotManager {
       
       await this.sendMessage(characterType, fallbackMessages[characterType]);
       return false;
+    } finally {
+      this.isGenerating = false;
     }
   }
 
@@ -292,6 +314,19 @@ export class BotManager {
     // 会話ループ
     while (this.isConversationActive && this.isRunning) {
       try {
+        // 人間の介入があった場合、会話履歴を更新
+        if (this.humanInterventionData) {
+          const { username, content } = this.humanInterventionData;
+          this.conversationHistory.addMessage('usako', content, true);
+          this.humanInterventionData = null;
+          
+          // 少し待機してから次のキャラクターに発言させる
+          await this.sleep(2000);
+          
+          // ランダムに選択
+          lastSpeaker = this.selectNextCharacter(null);
+        }
+
         // 連続失敗チェック
         if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES) {
           console.error(`\n🛑 Ollamaリクエストが${this.MAX_CONSECUTIVE_FAILURES}回連続で失敗しました`);
