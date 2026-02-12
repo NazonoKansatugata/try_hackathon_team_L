@@ -70,6 +70,15 @@ export class BotManager {
       initializeFirebase();
       console.log('✅ Firebaseを初期化しました');
 
+      // うさこBotのみに人間のメッセージハンドラーを設定（重複防止）
+      const usakoBot = this.bots.get('usako');
+      if (usakoBot) {
+        usakoBot.setOnHumanMessage((username, content, channelId) => {
+          this.handleHumanMessage(username, content, channelId);
+        });
+        console.log('✅ 人間のメッセージハンドラーを設定しました（うさこBotのみ）');
+      }
+
     } catch (error) {
       console.error('❌ Botの初期化に失敗しました:', error);
       await this.shutdown();
@@ -107,6 +116,33 @@ export class BotManager {
    */
   getAllBots(): CharacterBot[] {
     return Array.from(this.bots.values());
+  }
+
+  /**
+   * 人間のメッセージを処理
+   */
+  private async handleHumanMessage(username: string, content: string, channelId: string): Promise<void> {
+    // 対象チャンネルかどうか確認
+    if (channelId !== botConfig.channelId) {
+      return;
+    }
+
+    // 自律会話中のみ介入を受け付ける
+    if (!this.isConversationActive) {
+      return;
+    }
+
+    console.log(`\n👤 人間が会話に介入しました: ${username}\n`);
+
+    // 会話履歴に追加（isHuman=trueで人間のメッセージとして記録）
+    this.conversationHistory.addMessage('usako', content, true);
+
+    // 少し待機してから次のキャラクターに発言させる
+    await this.sleep(2000);
+
+    // ランダムにキャラクターを選択して応答させる
+    const nextCharacter = this.selectNextCharacter(null);
+    await this.generateAndSendMessage(nextCharacter);
   }
 
   /**
