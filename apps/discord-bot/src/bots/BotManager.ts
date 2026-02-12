@@ -170,10 +170,14 @@ export class BotManager {
     try {
       console.log(`🤔 ${characterType} が考え中...`);
 
+      // 次の発言者を事前に決定
+      const nextSpeaker = this.selectNextCharacter(characterType);
+
       // プロンプト構築
       let prompt = PromptBuilder.buildConversationPrompt(
         characterType,
         this.conversationHistory.getRecent(10),
+        nextSpeaker,
         theme,
         botConfig.kerokoPersonality
       );
@@ -210,7 +214,9 @@ export class BotManager {
         console.log(`\n📚 会話履歴が${this.REPORT_THRESHOLD}個に達しました。日報を生成します...\n`);
         
         // レポート生成前にうさこから終了メッセージを送信
-        await this.sendMessage('usako', '今日はここまで...');
+        const closingMessage = '今日はここまで...';
+        await this.sendMessage('usako', closingMessage);
+        this.conversationHistory.addMessage('usako', closingMessage);
         
         await this.generateDailyReports();
         // レポート生成後、会話を停止

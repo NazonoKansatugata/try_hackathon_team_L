@@ -53,7 +53,10 @@ export class CharacterBot {
     // Botのメッセージは無視（他のキャラクターBotは別途処理）
     // 人間のメッセージの場合、コールバックを呼ぶ
     if (!message.author.bot) {
-      console.log(`📝 [${this.config.displayName}が観測] ${message.author.username}: ${message.content}`);
+      // うさこBotのみログを残す
+      if (this.config.type === 'usako') {
+        console.log(`📝 [${this.config.displayName}が観測] ${message.author.username}: ${message.content}`);
+      }
       
       if (this.onHumanMessage) {
         this.onHumanMessage(message.author.username, message.content, message.channelId);

@@ -108,6 +108,7 @@ export class PromptBuilder {
   static buildConversationPrompt(
     characterType: CharacterType,
     conversationHistory: ConversationMessage[],
+    nextSpeaker: CharacterType,
     theme?: string,
     kerokoPersonality: KerokoPersonality = 'A'
   ): string {
@@ -119,11 +120,14 @@ export class PromptBuilder {
 
     // テーマがある場合
     const themeText = theme ? `\n【会話のテーマ】\n${theme}\n` : '';
+    
+    // 次の発言者情報
+    const nextSpeakerText = `\n【次の発言者】\n${this.getCharacterName(nextSpeaker)}\n`;
 
     // プロンプト構築
     const prompt = `${systemPrompt}
 
-${themeText}
+${themeText}${nextSpeakerText}
 【これまでの会話】
 ${historyText}
 
