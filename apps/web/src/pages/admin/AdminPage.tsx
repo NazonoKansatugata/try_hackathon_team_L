@@ -20,13 +20,14 @@ export default function AdminPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [fetchedReports, fetchedThemes] = await Promise.all([
+            const [fetchedReports, fetchedThemes, fetchedQuestions] = await Promise.all([
                 getAllReports(),
                 getAllThemes(),
                 getAllQuestions()
             ]);
             setReports(fetchedReports);
             setThemes(fetchedThemes);
+            setQuestions(fetchedQuestions);
         } catch (error) {
             console.error("データ取得失敗", error);
             alert("データの読み込みに失敗しました。")
