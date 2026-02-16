@@ -6,7 +6,8 @@ import {
   orderBy, 
   query,
   addDoc,
-  updateDoc
+  updateDoc,
+  onSnapshot
 } from "firebase/firestore";
 import { db } from "../../firebase"; // 設定ファイルをインポート
 import type { Question, Report, Theme } from "../../types";
@@ -84,3 +85,22 @@ export const updateQuestion = async (id: string, question: Partial<Question>): P
 export const deleteQuestion = async (id: string): Promise<void> => {
   await deleteDoc(doc(db, "questions", id));
 }
+
+/**
+ * 🔄 問題一覧のリアルタイムリスナーを設定
+ * @param callback - 問題一覧が更新される度に呼ばれるコールバック関数
+ * @returns アンサブスクライブ関数（クリーンアップ時に呼ぶ）
+ */
+export const subscribeToQuestions = (callback: (questions: Question[]) => void): (() => void) => {
+  const unsubscribe = onSnapshot(collection(db, "questions"), (snapshot) => {
+    const questions = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as unknown as Question[];
+    callback(questions);
+  }, (error) => {
+    console.error("問題リスナーエラー:", error);
+  });
+
+  return unsubscribe;
+};
