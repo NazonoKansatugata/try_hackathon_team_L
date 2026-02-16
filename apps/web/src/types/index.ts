@@ -12,7 +12,7 @@ export interface Character {
  * レポートの型定義
  */
 export interface Report {
-  id: number;
+  id: string;
   characterId: string;
   date: string;
   title: string;

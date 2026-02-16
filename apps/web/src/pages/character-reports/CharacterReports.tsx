@@ -1,7 +1,4 @@
 import { useParams, Link } from 'react-router-dom';
-import type { Character, Report } from '../../types';
-// import { sampleCharacters, sampleReports } from '../../data/sampleData'; // サンプルデータを使う場合はコメントを外す
-import './CharacterReports.css';
 import { useReports } from './useReport';
 
 /**
