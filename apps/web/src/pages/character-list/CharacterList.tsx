@@ -74,6 +74,12 @@ function CharacterList() {
             </div>
           </Link>
         )}
+        <Link to="/add-theme" className="question-panel-btn">
+          <div className="question-panel-content">
+            <span className="icon">✍️</span>
+            <span className="text">テーマを追加</span>
+          </div>
+        </Link>
         <Link to="/question" className="question-panel-btn">
           <div className="question-panel-content">
             <span className="icon">❓</span>
