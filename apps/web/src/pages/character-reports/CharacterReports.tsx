@@ -1,6 +1,10 @@
 import { useParams, Link } from 'react-router-dom';
 import { useReports } from './useReport';
-import './CharacterReports.css'
+import { sampleCharacters } from '../../data/sampleData';
+import usakoIcon from '../../assets/usako-2.png';
+import nekokoIcon from '../../assets/nekoko-2.png';
+import kerokoIcon from '../../assets/keroko-2.png';
+import './CharacterReports.css';
 
 /**
  * キャラクター別レポート画面
@@ -13,19 +17,17 @@ import './CharacterReports.css'
  */
 
 const CHAR_CONFIG = {
-  usako: { name: 'うさこ', colorClass: 'theme-usako'},
-  nekoko: { name: 'ねここ', colorClass: 'theme-nekoko'},
-  keroko: { name: 'けろこ', colorClass: 'theme-keroko'},
-}
+  usako: { name: 'うさこ', icon: usakoIcon },
+  nekoko: { name: 'ねここ', icon: nekokoIcon },
+  keroko: { name: 'けろこ', icon: kerokoIcon },
+};
 function CharacterReports() {
   // URLパラメータからキャラクターIDを取得
   const { characterId } = useParams<{ characterId: string }>();
   const { reports, loading, error} = useReports(characterId);
-  const currentConfig = CHAR_CONFIG[characterId as keyof typeof CHAR_CONFIG] || CHAR_CONFIG.usako;
+  const character = sampleCharacters.find((c) => c.id === characterId) || sampleCharacters[0];
 
-  // TODO: キャラクター情報を取得する
-  // const characters: Character[] = [...]; // またはsampleCharacters
-  // const character = characters.find(c => c.id === characterId);
+  const themeId = character?.id ?? 'usako';
 
   // TODO: レポートデータを配列で定義してください
   // 例: const allReports: Report[] = [{ id: 1, characterId: "usako", date: "2024-01-01", title: "今日の活動", content: "..." }, ...]
@@ -33,58 +35,65 @@ function CharacterReports() {
   // このキャラクターのレポートだけを取得: const reports = allReports.filter(r => r.characterId === characterId);
 
   return (
-    // 全体をキャラごとのテーマカラークラスで包む
-    <div className={`character-reports ${currentConfig.colorClass}`}>
-      
-      <div className="header">
-        <h1>🐰 おしゃべりうさこ部 日誌 📝</h1>
-      </div>
+    <div className="character-reports" data-theme={themeId}>
+      <header className="page-header">
+        <div className="title-block">
+          <p className="eyebrow">おしゃべりうさこ部 / キャラクターレポート</p>
+          <h1>キャラ日誌</h1>
+          <p className="subtitle">会話の雰囲気や成長のログを眺めるページです。</p>
+        </div>
+        <div className="top-actions">
+          <Link to="/" className="ghost-btn">キャラ一覧へ</Link>
+        </div>
+      </header>
 
-      {/* 1. キャラ切り替えタブ */}
-      <div className="char-tabs">
+      <nav className="char-tabs" aria-label="キャラクター切り替え">
         {Object.entries(CHAR_CONFIG).map(([id, config]) => (
-          <Link 
-            key={id} 
-            to={`/character/${id}`} 
+          <Link
+            key={id}
+            to={`/character/${id}`}
             className={`char-tab ${characterId === id ? 'active' : ''}`}
           >
-            {config.name}
+            <img src={config.icon} alt={config.name} className="tab-icon" />
+            <span>{config.name}</span>
           </Link>
         ))}
-      </div>
+      </nav>
 
-      <div className="report-list">
-        {loading && <div className="loading">読み込み中...</div>}
-        {error && <p className="error">{error}</p>}
-        
-        {!loading && reports.length === 0 && (
-          <div className="empty-state">まだ日記がありません🍃</div>
-        )}
+      <section className="report-section">
+        <div className="report-header">
+          <h3>最近の日誌</h3>
+          <span className="report-count">{reports.length}件</span>
+        </div>
 
-        {reports.map((report) => (
-          <article key={report.id} className="report-entry">
-            <div className="report-meta">
-              {/* 日付を強調 */}
-              <span className="report-date">📅 {report.date}</span>
-              
-              {/* 3. おしゃべり回数の表示（データにあれば） */}
-              {/* ※ Report型に messageCount を追加する必要があります */}
-              {(report as any).messageCount !== undefined && (
-                <span className="message-badge">
-                  💬 おしゃべり: {(report as any).messageCount}回
-                </span>
-              )}
-            </div>
+        <div className="report-list">
+          {loading && <div className="loading">読み込み中...</div>}
+          {error && <p className="error">{error}</p>}
 
-            <div className="report-content">
-               {/* 本文 */}
-              {(report.content || "").split('\n').map((line, i) => (
-                <p key={i}>{line}</p>
-              ))}
-            </div>
-          </article>
-        ))}
-      </div>
+          {!loading && reports.length === 0 && (
+            <div className="empty-state">まだ日記がありません🍃</div>
+          )}
+
+          {reports.map((report) => (
+            <article key={report.id} className="report-entry">
+              <div className="report-meta">
+                <span className="report-date">📅 {report.date}</span>
+                {(report as any).messageCount !== undefined && (
+                  <span className="message-badge">
+                    💬 おしゃべり: {(report as any).messageCount}回
+                  </span>
+                )}
+              </div>
+
+              <div className="report-content">
+                {(report.content || '').split('\n').map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
