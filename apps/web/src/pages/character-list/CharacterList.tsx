@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Character } from '../../types';
-// import { sampleCharacters } from '../../data/sampleData'; // サンプルデータを使う場合はコメントを外す
+import { sampleCharacters } from '../../data/sampleData';
 import './CharacterList.css';
 
 /**
@@ -17,26 +17,43 @@ import './CharacterList.css';
  * - けろこ: 性格切り替え可能。人格Aはおどおど、人格Bはツンツン。
  */
 function CharacterList() {
-  // TODO: キャラクターデータを配列で定義してください
-  // 例: const characters: Character[] = [{ id: "usako", name: "うさこ", description: "主人公・ミステリアス担当..." }, ...]
-  // または: const characters = sampleCharacters; // サンプルデータを使用
-  
+  // サンプルキャラクターを利用
+  // サンプルキャラクターを個別に取得
+  const usako = sampleCharacters.find(c => c.id === 'usako');
+  const nekoko = sampleCharacters.find(c => c.id === 'nekoko');
+  const keroko = sampleCharacters.find(c => c.id === 'keroko');
+
   return (
     <div className="character-list">
       <h1>キャラクター紹介</h1>
-      
       <div className="character-grid">
-        {/* TODO: ここにキャラクターのカードを表示してください */}
-        {/* 例: characters.map((character) => ( ... )) */}
-        
-        {/* サンプル表示 */}
-        <div className="character-card sample">
-          <h2>サンプルキャラクター</h2>
-          <p>ここにキャラクターの説明が入ります</p>
-          <Link to="/character/sample">
-            <button>レポートを見る</button>
-          </Link>
-        </div>
+        {usako && (
+          <div className="character-card touch-panel">
+            <h2>{usako.name}</h2>
+            <p>{usako.description}</p>
+            <Link to={`/character/${usako.id}`}>
+              <button>レポートを見る</button>
+            </Link>
+          </div>
+        )}
+        {nekoko && (
+          <div className="character-card touch-panel">
+            <h2>{nekoko.name}</h2>
+            <p>{nekoko.description}</p>
+            <Link to={`/character/${nekoko.id}`}>
+              <button>レポートを見る</button>
+            </Link>
+          </div>
+        )}
+        {keroko && (
+          <div className="character-card touch-panel">
+            <h2>{keroko.name}</h2>
+            <p>{keroko.description}</p>
+            <Link to={`/character/${keroko.id}`}>
+              <button>レポートを見る</button>
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
