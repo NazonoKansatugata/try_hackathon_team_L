@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAllReports, getAllThemes, getAllQuestions, deleteQuestion, deleteTheme, deleteReport, addQuestion, updateQuestion} from "./fetchData";
+import { getAllReports, getAllThemes, deleteQuestion, deleteTheme, deleteReport, addQuestion, updateQuestion, subscribeToQuestions} from "./fetchData";
 import type { Report, Theme, Question} from "../../types";
 
 export default function AdminPage() {
@@ -14,27 +14,37 @@ export default function AdminPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        const fetchDataAndSubscribe = async () => {
+            setLoading(true);
+            try {
+                const [fetchedReports, fetchedThemes] = await Promise.all([
+                    getAllReports(),
+                    getAllThemes()
+                ]);
+                setReports(fetchedReports);
+                setThemes(fetchedThemes);
 
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const [fetchedReports, fetchedThemes, fetchedQuestions] = await Promise.all([
-                getAllReports(),
-                getAllThemes(),
-                getAllQuestions()
-            ]);
-            setReports(fetchedReports);
-            setThemes(fetchedThemes);
-            setQuestions(fetchedQuestions);
-        } catch (error) {
-            console.error("データ取得失敗", error);
-            alert("データの読み込みに失敗しました。")
-        } finally {
-            setLoading(false);
-        }
-    };
+                // 問題一覧についてはリアルタイムリスナーを設定
+                const unsubscribe = subscribeToQuestions((fetchedQuestions) => {
+                    setQuestions(fetchedQuestions);
+                });
+
+                setLoading(false);
+
+                // クリーンアップ：コンポーネントアンマウント時にリスナーを解除
+                return unsubscribe;
+            } catch (error) {
+                console.error("データ取得失敗", error);
+                alert("データの読み込みに失敗しました。");
+                setLoading(false);
+            }
+        };
+
+        const unsubscribePromise = fetchDataAndSubscribe();
+        return () => {
+            unsubscribePromise.then(unsub => unsub?.());
+        };
+    }, []);
 
     const handleDelete = async (id: string, type: "report" | "theme" | "question") => {
         if (!window.confirm("本当に削除しますか？")) return;
@@ -48,7 +58,7 @@ export default function AdminPage() {
                 setThemes(themes.filter((t) => t.id !== id));
             } else {
               await deleteQuestion(id);
-              setQuestions(questions.filter((q) => q.id !== id));
+              // 問題一覧の削除はリアルタイムリスナーが自動反映
             }
             alert("削除しました");
         } catch (error) {
@@ -73,8 +83,7 @@ export default function AdminPage() {
           alert("追加しました");
         }
 
-        const newQuestions = await getAllQuestions();
-        setQuestions(newQuestions);
+        // リアルタイムリスナーが自動で更新するため、手動での再取得は不要
         resetForm();
       } catch (error) {
         console.error(error);

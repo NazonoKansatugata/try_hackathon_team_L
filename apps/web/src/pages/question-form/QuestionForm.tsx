@@ -1,46 +1,87 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getAllQuestions } from '../admin/fetchData';
+import type { Question } from '../../types';
 import './QuestionForm.css';
 
 function QuestionForm() {
   const navigate = useNavigate();
 
   // 複数問題を配列で管理（うさこに関する〇×問題）
-  const problems = [
+  const defaultProblems = [
     {
-      title: '問題1: うさこの生活リズム',
-      body:
-        '次の文は、うさこに関する記述です。該当するなら「〇」、該当しないなら「×」を選んでください。\n\n「うさこは夜により活動的で、昼は控えめに過ごす傾向がある。」',
-      correct: 'o',
+      id: 'default-1',
+      questionText: 'うさこは夜により活動的で、昼は控えめに過ごす傾向がある。',
+      questionAnswer: 'o',
     },
     {
-      title: '問題2: 社交性について',
-      body:
-        '「うさこは人前で積極的に話すタイプである。」',
-      correct: 'o',
+      id: 'default-2',
+      questionText: 'うさこは人前で積極的に話すタイプである。',
+      questionAnswer: 'o',
     },
     {
-      title: '問題3: 好物に関する記述',
-      body:
-        '「うさこは甘いものが好きで、よくお菓子を食べる。」',
-      correct: 'o',
+      id: 'default-3',
+      questionText: 'うさこは甘いものが好きで、よくお菓子を食べる。',
+      questionAnswer: 'o',
     },
     {
-      title: '問題4: 秘密保持について',
-      body:
-        '「うさこは他人の秘密を守ることができる。」',
-      correct: 'o',
+      id: 'default-4',
+      questionText: 'うさこは他人の秘密を守ることができる。',
+      questionAnswer: 'o',
     },
     {
-      title: '問題5: 外見に関する記述',
-      body:
-        '「うさこの見た目は、他のキャラクターと比べてより個性的である。」',
-      correct: 'o',
+      id: 'default-5',
+      questionText: 'うさこの見た目は、他のキャラクターと比べてより個性的である。',
+      questionAnswer: 'o',
     },
   ];
 
+  const [problems, setProblems] = useState<(Question & { id: string })[]>([]);
+  const [loading, setLoading] = useState(true);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<number, 'o' | 'x' | ''>>({});
+
+  // Fisher-Yates シャッフルアルゴリズム
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  // Firestore から問題をロードして、ランダムに5問選出
+  useEffect(() => {
+    const loadProblems = async () => {
+      try {
+        const questions = await getAllQuestions();
+        
+        // 問題が登録されているかチェック
+        if (questions && questions.length > 0) {
+          // 5問以上あればランダムに5問選出、5問未満は全部使用
+          const numToSelect = Math.min(5, questions.length);
+          const shuffled = shuffleArray(questions);
+          const selected = shuffled.slice(0, numToSelect);
+          setProblems(selected as (Question & { id: string })[]);
+        } else {
+          // フォールバック：デフォルト問題を使用
+          console.warn('登録済み問題がないため、デフォルト問題を使用します');
+          const shuffled = shuffleArray(defaultProblems);
+          setProblems(shuffled);
+        }
+      } catch (error) {
+        console.error('問題の読み込みに失敗しました', error);
+        // エラー時もデフォルト問題を使用
+        const shuffled = shuffleArray(defaultProblems);
+        setProblems(shuffled);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProblems();
+  }, []);
 
   const handleChoice = (val: 'o' | 'x') => {
     setAnswers((prev) => ({ ...prev, [current]: val }));
@@ -66,12 +107,25 @@ function QuestionForm() {
       return;
     }
     // 正答数を計算
-    const correctCount = problems.filter((p, i) => answers[i] === p.correct).length;
+    const correctCount = problems.filter((p, i) => answers[i] === p.questionAnswer).length;
     const percentage = Math.round((correctCount / problems.length) * 100);
     
     // 結果画面へ遷移
     navigate('/result', { state: { percentage, correctCount, totalCount: problems.length } });
   };
+
+  if (loading) {
+    return <div className="question-form-page"><h1>読み込み中...</h1></div>;
+  }
+
+  if (problems.length === 0) {
+    return (
+      <div className="question-form-page">
+        <h1>エラー</h1>
+        <p>問題を読み込めませんでした。管理画面から問題を登録してください。</p>
+      </div>
+    );
+  }
 
   return (
     <div className="question-form-page">
@@ -83,10 +137,10 @@ function QuestionForm() {
       <form className="question-form" onSubmit={handleSubmitAll}>
         <div className="question-header">
           <div className="progress">{current + 1} / {problems.length}</div>
-          <h3 className="current-title">{problems[current].title}</h3>
+          <h3 className="current-title">問題{current + 1}</h3>
         </div>
 
-        <pre className="current-body">{problems[current].body}</pre>
+        <pre className="current-body">{problems[current].questionText}</pre>
 
         <div className="binary-block">
           <label className={`binary-option ${answers[current] === 'o' ? 'active' : ''}`} onClick={() => handleChoice('o')}>
