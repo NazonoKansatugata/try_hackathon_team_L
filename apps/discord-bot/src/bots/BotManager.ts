@@ -192,14 +192,11 @@ export class BotManager {
       // 次の発言者を事前に決定
       const nextSpeaker = this.selectNextCharacter(characterType);
 
-
       // プロンプト構築
       let prompt = PromptBuilder.buildConversationPrompt(
         characterType,
         recentMessages,
-        this.conversationHistory.getRecent(10),
         nextSpeaker,
-
         theme,
         botConfig.kerokoPersonality
       );
@@ -337,10 +334,6 @@ export class BotManager {
     // 会話ループ
     while (this.isConversationActive && this.isRunning) {
       try {
-        // エラーレベルをチェック
-        if (!this.errorRecoveryManager.isRecoverable()) {
-          console.error(`\n🛑 エラーが回復不可能な状態になりました`);
-
         // 人間の介入があった場合、会話履歴を更新
         if (this.humanInterventionData) {
           const { username, content } = this.humanInterventionData;
@@ -354,9 +347,9 @@ export class BotManager {
           lastSpeaker = this.selectNextCharacter(null);
         }
 
-        // 連続失敗チェック
-        if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES) {
-          console.error(`\n🛑 Ollamaリクエストが${this.MAX_CONSECUTIVE_FAILURES}回連続で失敗しました`);
+        // エラーレベルをチェック
+        if (!this.errorRecoveryManager.isRecoverable()) {
+          console.error(`\n🛑 エラーが回復不可能な状態になりました`);
           console.error('⚠️ 自律会話を停止します\n');
           this.stopAutonomousConversation();
           break;
