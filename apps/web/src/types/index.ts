@@ -43,3 +43,9 @@ export interface Theme {
   category: string;
   keywords: string[];
 }
+
+export interface Question {
+  id: string;
+  questionText: string;
+  questionAnswer: string;
+}

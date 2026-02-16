@@ -5,9 +5,11 @@ import {
   doc, 
   orderBy, 
   query,
+  addDoc,
+  updateDoc
 } from "firebase/firestore";
 import { db } from "../../firebase"; // 設定ファイルをインポート
-import type { Report, Theme } from "../../types";
+import type { Question, Report, Theme } from "../../types";
 
 // ... 既存の初期化コード ...
 
@@ -61,3 +63,24 @@ export const getAllThemes = async (): Promise<Theme[]> => {
     ...doc.data()
   })) as Theme[];
 };
+
+export const getAllQuestions = async (): Promise<Question[]> => {
+  const snapshot = await getDocs(collection(db, "questions"));
+  return snapshot.docs.map(doc => ({
+  id: doc.id,
+  ...doc.data()
+  })) as unknown as Question[];
+}
+
+export const addQuestion = async (question: Omit<Question, "id">): Promise<void> => {
+  await addDoc(collection(db, "questions"), question);
+};
+
+export const updateQuestion = async (id: string, question: Partial<Question>): Promise<void> => {
+  const docRef = doc(db, "questions", id);
+  await updateDoc(docRef, question);
+}
+
+export const deleteQuestion = async (id: string): Promise<void> => {
+  await deleteDoc(doc(db, "questions", id));
+}
