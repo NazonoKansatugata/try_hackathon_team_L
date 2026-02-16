@@ -5,7 +5,21 @@ export interface Character {
   id: string;
   name: string;
   description: string;
+  profile?: CharacterProfile;
+  profileVariants?: CharacterProfileVariants;
   imageUrl?: string;
+}
+
+export interface CharacterProfile {
+  catchphrase?: string;
+  role?: string;
+  likes?: string[];
+  dislikes?: string[];
+}
+
+export interface CharacterProfileVariants {
+  A: CharacterProfile;
+  B: CharacterProfile;
 }
 
 /**
