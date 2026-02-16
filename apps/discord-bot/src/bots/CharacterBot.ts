@@ -8,6 +8,7 @@ export class CharacterBot {
   private client: Client;
   private config: CharacterConfig;
   private isReady: boolean = false;
+  private onHumanMessage?: (username: string, content: string, channelId: string) => void;
 
   constructor(config: CharacterConfig) {
     this.config = config;
@@ -50,10 +51,24 @@ export class CharacterBot {
     }
 
     // Botのメッセージは無視（他のキャラクターBotは別途処理）
-    // ここでは基本的なログ記録のみ
+    // 人間のメッセージの場合、コールバックを呼ぶ
     if (!message.author.bot) {
-      console.log(`📝 [${this.config.displayName}が観測] ${message.author.username}: ${message.content}`);
+      // うさこBotのみログを残す
+      if (this.config.type === 'usako') {
+        console.log(`📝 [${this.config.displayName}が観測] ${message.author.username}: ${message.content}`);
+      }
+      
+      if (this.onHumanMessage) {
+        this.onHumanMessage(message.author.username, message.content, message.channelId);
+      }
     }
+  }
+
+  /**
+   * 人間のメッセージを受け取った際のコールバックを設定
+   */
+  setOnHumanMessage(callback: (username: string, content: string, channelId: string) => void): void {
+    this.onHumanMessage = callback;
   }
 
   /**
