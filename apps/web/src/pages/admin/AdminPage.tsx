@@ -14,33 +14,37 @@ export default function AdminPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchData();
+        const fetchDataAndSubscribe = async () => {
+            setLoading(true);
+            try {
+                const [fetchedReports, fetchedThemes] = await Promise.all([
+                    getAllReports(),
+                    getAllThemes()
+                ]);
+                setReports(fetchedReports);
+                setThemes(fetchedThemes);
+
+                // 問題一覧についてはリアルタイムリスナーを設定
+                const unsubscribe = subscribeToQuestions((fetchedQuestions) => {
+                    setQuestions(fetchedQuestions);
+                });
+
+                setLoading(false);
+
+                // クリーンアップ：コンポーネントアンマウント時にリスナーを解除
+                return unsubscribe;
+            } catch (error) {
+                console.error("データ取得失敗", error);
+                alert("データの読み込みに失敗しました。");
+                setLoading(false);
+            }
+        };
+
+        const unsubscribePromise = fetchDataAndSubscribe();
+        return () => {
+            unsubscribePromise.then(unsub => unsub?.());
+        };
     }, []);
-
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const [fetchedReports, fetchedThemes] = await Promise.all([
-                getAllReports(),
-                getAllThemes()
-            ]);
-            setReports(fetchedReports);
-            setThemes(fetchedThemes);
-
-            // 問題一覧についてはリアルタイムリスナーを設定
-            const unsubscribe = subscribeToQuestions((fetchedQuestions) => {
-                setQuestions(fetchedQuestions);
-            });
-
-            // クリーンアップ：コンポーネントアンマウント時にリスナーを解除
-            return unsubscribe;
-        } catch (error) {
-            console.error("データ取得失敗", error);
-            alert("データの読み込みに失敗しました。")
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleDelete = async (id: string, type: "report" | "theme" | "question") => {
         if (!window.confirm("本当に削除しますか？")) return;
