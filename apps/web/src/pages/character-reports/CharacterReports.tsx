@@ -14,19 +14,16 @@ import { useReports } from './useReport';
  * 4. レポートのフィルタリングや検索機能を追加する（オプション）
  */
 
-const CHAR_NAMES: Record<string, string> = {
-  usako: `うさこ`,
-  nekoko: `ねここ`,
-  keroko: `けろこ`,
-};
+const CHAR_CONFIG = {
+  usako: { name: 'うさこ', colorClass: 'theme-usako'},
+  nekoko: { name: 'ねここ', colorClass: 'theme-nekoko'},
+  keroko: { name: 'けろこ', colorClass: 'theme-keroko'},
+}
 function CharacterReports() {
   // URLパラメータからキャラクターIDを取得
   const { characterId } = useParams<{ characterId: string }>();
-
   const { reports, loading, error} = useReports(characterId);
-
-  const characterName = characterId ? (CHAR_NAMES[characterId] || characterId) : "不明なキャラクター";
-
+  const currentConfig = CHAR_CONFIG[characterId as keyof typeof CHAR_CONFIG] || CHAR_CONFIG.usako;
 
   // TODO: キャラクター情報を取得する
   // const characters: Character[] = [...]; // またはsampleCharacters
@@ -38,41 +35,56 @@ function CharacterReports() {
   // このキャラクターのレポートだけを取得: const reports = allReports.filter(r => r.characterId === characterId);
 
   return (
-    <div className="character-reports">
+    // 全体をキャラごとのテーマカラークラスで包む
+    <div className={`character-reports ${currentConfig.colorClass}`}>
+      
       <div className="header">
-        <Link to="/" className="back-button">
-          ← キャラクター一覧に戻る
-        </Link>
-        <h1>{characterName} のレポート</h1>
+        <h1>🐰 おしゃべりうさこ部 日誌 📝</h1>
+      </div>
+
+      {/* 1. キャラ切り替えタブ */}
+      <div className="char-tabs">
+        {Object.entries(CHAR_CONFIG).map(([id, config]) => (
+          <Link 
+            key={id} 
+            to={`/character/${id}`} 
+            className={`char-tab ${characterId === id ? 'active' : ''}`}
+          >
+            {config.name}
+          </Link>
+        ))}
       </div>
 
       <div className="report-list">
-        {/* ローディング表示 */}
-        {loading && <p>読み込み中...</p>}
-
-        {/* エラー表示 */}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-
-        {/* データがない場合 */}
-        {!loading && !error && reports.length === 0 && (
-          <p>まだ日記がありません。</p>
+        {loading && <div className="loading">読み込み中...</div>}
+        {error && <p className="error">{error}</p>}
+        
+        {!loading && reports.length === 0 && (
+          <div className="empty-state">まだ日記がありません🍃</div>
         )}
 
-        {/* 3. レポートのリストを表示 */}
         {reports.map((report) => (
-          <div key={report.id} className="report-entry">
-            <div className="report-header">
-              <span className="report-date">{report.date}</span>
-              {/* タイトルがあれば表示、なければ日付などで代用 */}
-              <h2 className="report-title">{report.title || "無題の日記"}</h2>
+          <article key={report.id} className="report-entry">
+            <div className="report-meta">
+              {/* 日付を強調 */}
+              <span className="report-date">📅 {report.date}</span>
+              
+              {/* 3. おしゃべり回数の表示（データにあれば） */}
+              {/* ※ Report型に messageCount を追加する必要があります */}
+              {(report as any).messageCount !== undefined && (
+                <span className="message-badge">
+                  💬 おしゃべり: {(report as any).messageCount}回
+                </span>
+              )}
             </div>
+
             <div className="report-content">
-              {/* 改行コードを <br> に変換して表示する場合の簡易実装 */}
+               {/* 本文 */}
               {(report.content || "").split('\n').map((line, i) => (
                 <p key={i}>{line}</p>
               ))}
             </div>
-          </div>
+          </article>
         ))}
       </div>
     </div>

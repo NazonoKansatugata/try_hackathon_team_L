@@ -1,82 +1,65 @@
-.character-reports {
-  padding: 2rem;
-  max-width: 900px;
-  margin: 0 auto;
+:root {
+  --color-usako: #ffdde1;
+  --color-usako-accent: #ee9ca7;
+  --color-nekoko: #fce38a;
+  --color-nekoko-accent: #f38181;
+  --color-keroko: #d4fc79;
+  --color-keroko-accent: #96e6a1;
 }
 
-.header {
-  margin-bottom: 2rem;
-}
+/* キャラごとの動的クラス用 */
+.theme-usako { --bg-color: var(--color-usako); --accent-color: var(--color-usako-accent); }
+.theme-nekoko { --bg-color: var(--color-nekoko); --accent-color: var(--color-nekoko-accent); }
+.theme-keroko { --bg-color: var(--color-keroko); --accent-color: var(--color-keroko-accent); }
 
-.back-button {
-  display: inline-block;
-  margin-bottom: 1rem;
-  color: #3498db;
-  text-decoration: none;
-  font-size: 1rem;
-  transition: color 0.2s;
-}
-
-.back-button:hover {
-  color: #2980b9;
-  text-decoration: underline;
-}
-
-.header h1 {
-  color: #2c3e50;
-  margin: 0;
-}
-
-.report-list {
+/* タブナビゲーション */
+.char-tabs {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
 }
 
-.report-entry {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 1.5rem;
-  transition: box-shadow 0.2s;
-}
-
-.report-entry:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.report-entry.sample {
-  border: 2px dashed #3498db;
-  background-color: #f8f9fa;
-}
-
-.report-header {
-  margin-bottom: 1rem;
-  border-bottom: 2px solid #ecf0f1;
-  padding-bottom: 0.5rem;
-}
-
-.report-date {
-  display: inline-block;
-  background-color: #3498db;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-}
-
-.report-title {
-  margin: 0.5rem 0 0 0;
-  color: #2c3e50;
-  font-size: 1.5rem;
-}
-
-.report-content {
+.char-tab {
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  text-decoration: none;
   color: #555;
-  line-height: 1.8;
+  background: #eee;
+  transition: all 0.2s;
+  font-weight: bold;
 }
 
-.report-content p {
-  margin: 0.5rem 0;
+.char-tab.active {
+  background: var(--accent-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* 日記カードのデザイン変更 */
+.report-entry {
+  background: #fff;
+  border: none; /* 枠線を消す */
+  border-left: 6px solid var(--accent-color); /* 左にアクセントカラー */
+  border-radius: 4px 12px 12px 4px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05); /* ふわっと浮く影 */
+  padding: 1.5rem;
+  position: relative;
+}
+
+.report-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.message-badge {
+  background: #f0f0f0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
 }
