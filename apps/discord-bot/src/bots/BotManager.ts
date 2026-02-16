@@ -5,8 +5,10 @@ import { OllamaClient } from '../ollama/client.js';
 import { PromptBuilder } from '../llm/promptBuilder.js';
 import { ConversationHistory } from '../conversation/history.js';
 import { initializeFirebase, getRandomTheme, saveDailyReport } from '../firebase/firestore.js';
-import { ThemeContext } from '../llm/themeContext.js';
+import { ThemeContextFactory, ThemeContextSession } from '../llm/themeContextFactory.js';
 import { ReportPromptBuilder } from '../llm/reportPromptBuilder.js';
+import { ConversationQualityAnalyzer } from '../analysis/conversationQualityAnalyzer.js';
+import { ErrorRecoveryManager } from './errorRecoveryManager.js';
 
 /**
  * 複数のBotを管理するマネージャークラス
@@ -15,14 +17,13 @@ export class BotManager {
   private bots: Map<CharacterType, CharacterBot> = new Map();
   private isRunning: boolean = false;
   private isConversationActive: boolean = false;
-  private consecutiveFailures: number = 0;
-  private readonly MAX_CONSECUTIVE_FAILURES = 3;
   private conversationTurnCount: number = 0;
-  private readonly SCENARIO_UPDATE_INTERVAL = 20;
-  private readonly REPORT_THRESHOLD = 15; // レポート生成する会話数(いづれ消す)
+
+  private readonly REPORT_THRESHOLD = 30; // レポート生成する会話数(いづれ消す)
   private ollamaClient: OllamaClient;
   private conversationHistory: ConversationHistory;
-  private themeContext: ThemeContext | null = null;
+  private themeContextSession: ThemeContextSession | null = null;
+  private errorRecoveryManager: ErrorRecoveryManager;
   private isGenerating: boolean = false;
   private shouldCancelGeneration: boolean = false;
   private humanInterventionData: { username: string; content: string } | null = null;
@@ -30,6 +31,7 @@ export class BotManager {
   constructor() {
     this.ollamaClient = new OllamaClient();
     this.conversationHistory = new ConversationHistory();
+    this.errorRecoveryManager = new ErrorRecoveryManager();
   }
 
   /**
@@ -181,6 +183,11 @@ export class BotManager {
 
     try {
       console.log(`🤔 ${characterType} が考え中...`);
+      
+      // 会話品質スコアを計算
+      const recentMessages = this.conversationHistory.getRecent(10);
+      const qualityScore = ConversationQualityAnalyzer.calculateQualityScore(recentMessages);
+      const conversationState = ConversationQualityAnalyzer.evaluateConversationState(qualityScore);
 
       // 次の発言者を事前に決定
       const nextSpeaker = this.selectNextCharacter(characterType);
@@ -188,15 +195,19 @@ export class BotManager {
       // プロンプト構築
       let prompt = PromptBuilder.buildConversationPrompt(
         characterType,
-        this.conversationHistory.getRecent(10),
+        recentMessages,
         nextSpeaker,
         theme,
         botConfig.kerokoPersonality
       );
 
-      // テーマコンテキストを適用
-      if (this.themeContext) {
-        prompt = this.themeContext.expandPrompt(prompt);
+      // テーマコンテキストを適用 + 会話状態をプロンプトに含める
+      if (this.themeContextSession) {
+        prompt = this.themeContextSession.expandPrompt(prompt);
+        
+        // 会話状態に応じた制御句を追加
+        const controlPrompt = ConversationQualityAnalyzer.getControlPrompt(conversationState);
+        prompt += `\n\n【会話状態制御】\n${controlPrompt}`;
       }
 
       // LLMで生成（maxTokens指定なし = 設定ファイルのデフォルト値を使用）
@@ -216,17 +227,15 @@ export class BotManager {
       // 履歴に追加
       this.conversationHistory.addMessage(characterType, generatedText);
 
-      // 成功したので失敗カウンターをリセット
-      this.consecutiveFailures = 0;
+      // 成功したのでエラーリカバリーから回復
+      this.errorRecoveryManager.recordSuccess();
       
       // ターンカウンターを増やす
       this.conversationTurnCount++;
       
-      // 20ターンごとにシナリオを更新
-      if (this.conversationTurnCount % this.SCENARIO_UPDATE_INTERVAL === 0 && this.themeContext) {
-        console.log(`\n📊 ${this.conversationTurnCount}ターン経過、シナリオを更新します...\n`);
-        const recentMessages = this.formatRecentMessagesForUpdate();
-        await this.themeContext.updateScenario(recentMessages);
+      // 品質スコアベースでシナリオを動的に更新
+      if (this.themeContextSession) {
+        await this.themeContextSession.updateScenarioIfNeeded(recentMessages);
       }
       
       // 会話履歴が50個に達したらレポート生成
@@ -238,6 +247,12 @@ export class BotManager {
         await this.sendMessage('usako', closingMessage);
         this.conversationHistory.addMessage('usako', closingMessage);
         
+        // セッションをクローズ
+        if (this.themeContextSession) {
+          this.themeContextSession.close();
+          this.themeContextSession = null;
+        }
+        
         await this.generateDailyReports();
         // レポート生成後、会話を停止
         this.stopAutonomousConversation();
@@ -248,9 +263,13 @@ export class BotManager {
     } catch (error) {
       console.error(`❌ ${characterType} の発言生成に失敗:`, error);
       
-      // 失敗カウンターを増やす
-      this.consecutiveFailures++;
-      console.error(`⚠️ 連続失敗回数: ${this.consecutiveFailures}/${this.MAX_CONSECUTIVE_FAILURES}`);
+      // エラーリカバリーを記録
+      this.errorRecoveryManager.recordFailure();
+      
+      const recovery = this.errorRecoveryManager.getRecoveryAction();
+      const state = this.errorRecoveryManager.getState();
+      console.error(`⚠️ エラーレベル: ${this.errorRecoveryManager.getErrorLevel()} - ${recovery.description}`);
+      console.error(`⚠️ 連続失敗回数: ${state.consecutiveFailures}`);
       
       // フォールバック（LLM失敗時のデフォルト発言）
       const fallbackMessages = {
@@ -276,21 +295,22 @@ export class BotManager {
     }
 
     this.isConversationActive = true;
-    this.consecutiveFailures = 0; // カウンターをリセット
+    this.errorRecoveryManager.reset(); // エラーリカバリーをリセット
     this.conversationTurnCount = 0; // ターンカウンターをリセット
     console.log('🎭 自律会話を開始します...\n');
 
     // Firestoreからランダムなテーマを取得
     try {
       const theme = await getRandomTheme();
-      this.themeContext = new ThemeContext(theme);
+      // セッション型のテーマコンテキストを作成（イミュータブル）
+      this.themeContextSession = ThemeContextFactory.createSession(theme);
       
       // テーマの会話シナリオを生成
-      await this.themeContext.generateScenario();
+      await this.themeContextSession.generateScenario();
       
     } catch (error) {
       console.warn('⚠️ テーマ取得またはシナリオ生成に失敗しました:', error);
-      this.themeContext = null;
+      this.themeContextSession = null;
     }
 
     // 初期メッセージまたはシナリオベースの会話開始
@@ -302,7 +322,7 @@ export class BotManager {
       await this.sendMessage('usako', initialMessage);
       this.conversationHistory.addMessage('usako', initialMessage);
       await this.sleep(2000);
-    } else if (this.themeContext && this.themeContext.getScenario()) {
+    } else if (this.themeContextSession) {
       // シナリオが生成されている場合、うさこが最初に発言
       console.log('💬 シナリオに基づいて会話を開始します...\n');
       await this.generateAndSendMessage('usako');
@@ -327,12 +347,40 @@ export class BotManager {
           lastSpeaker = this.selectNextCharacter(null);
         }
 
-        // 連続失敗チェック
-        if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES) {
-          console.error(`\n🛑 Ollamaリクエストが${this.MAX_CONSECUTIVE_FAILURES}回連続で失敗しました`);
+        // エラーレベルをチェック
+        if (!this.errorRecoveryManager.isRecoverable()) {
+          console.error(`\n🛑 エラーが回復不可能な状態になりました`);
           console.error('⚠️ 自律会話を停止します\n');
           this.stopAutonomousConversation();
           break;
+        }
+
+        // エラー復旧が必要な場合、段階的に処理
+        const recovery = this.errorRecoveryManager.getRecoveryAction();
+        if (recovery.action !== 'retry') {
+          console.log(`\n🔄 エラー復旧: [${recovery.description}]`);
+          
+          if (recovery.waitMs > 0) {
+            console.log(`⏳ ${recovery.waitMs}ms 待機中...`);
+            await this.sleep(recovery.waitMs);
+          }
+
+          if (recovery.action === 'switch-character') {
+            lastSpeaker = this.errorRecoveryManager.selectAlternativeCharacter(lastSpeaker);
+            console.log(`キャラ交代 → ${lastSpeaker}`);
+          } else if (recovery.action === 'switch-theme') {
+            console.log('🔄 新しいテーマに切り替えを試みます...');
+            try {
+              const newTheme = await getRandomTheme();
+              this.themeContextSession?.close();
+              this.themeContextSession = ThemeContextFactory.createSession(newTheme);
+              await this.themeContextSession.generateScenario();
+              this.errorRecoveryManager.reset();
+              console.log('✅ テーマを切り替えしました');
+            } catch (e) {
+              console.error('❌ テーマ切り替え失敗:', e);
+            }
+          }
         }
 
         // 前回話したキャラクター以外からランダムに選択
@@ -352,6 +400,12 @@ export class BotManager {
         // エラーが発生しても会話を続ける
         await this.sleep(3000);
       }
+    }
+
+    // セッションをクローズ
+    if (this.themeContextSession) {
+      this.themeContextSession.close();
+      this.themeContextSession = null;
     }
 
     console.log('🛑 自律会話を停止しました');
@@ -392,16 +446,6 @@ export class BotManager {
    */
   isConversationRunning(): boolean {
     return this.isConversationActive;
-  }
-
-  /**
-   * 直近の会話履歴をシナリオ更新用にフォーマット
-   */
-  private formatRecentMessagesForUpdate(): string {
-    const recentMessages = this.conversationHistory.getRecent(10);
-    return recentMessages
-      .map(msg => `${msg.characterType}: ${msg.content}`)
-      .join('\n');
   }
 
   /**
