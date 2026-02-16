@@ -69,10 +69,10 @@
 .current-title { margin:0; font-size:1rem; color:#13232f; }
 .current-body { white-space: pre-wrap; background:#fbfbff; padding:0.75rem 1rem; border-radius:8px; border:1px solid #eef3ff; color:#23414a; }
 
-.nav-buttons { display:flex; justify-content:space-between; gap:0.75rem; margin-top:0.75rem; }
-.nav { padding:0.55rem 0.85rem; border-radius:8px; border:1px solid #dbe9ff; background:#fff; cursor:pointer; }
-.nav.primary { background: linear-gradient(180deg,#5aa6ff,#3b8ee6); color:#fff; border:none; }
-.nav:disabled { opacity:0.45; cursor:not-allowed; }
+.nav-buttons { display: flex; justify-content: space-between; gap: 0.75rem; margin-top: 0.75rem; }
+.nav { flex: 1; padding: 0.55rem 0.85rem; border-radius: 8px; border: 1px solid #dbe9ff; background: #fff; cursor: pointer; font-weight: 700; font-size: 0.95rem; color: #34495e; }
+.nav.primary { background: linear-gradient(180deg, #5aa6ff, #3b8ee6); color: #fff; border: none; }
+.nav:disabled { opacity: 0.5; cursor: not-allowed; background-color: #f0f4f9; color: #9caced; }
 
 
 button.submit {

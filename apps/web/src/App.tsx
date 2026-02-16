@@ -3,6 +3,7 @@ import CharacterList from './pages/character-list/CharacterList';
 import CharacterReports from './pages/character-reports/CharacterReports';
 import ThemeForm from './pages/theme-form/ThemeForm';
 import QuestionForm from './pages/question-form/QuestionForm';
+import ResultPage from './pages/result/ResultPage';
 import AdminPage from "./pages/admin/AdminPage"
 import './App.css';
 
@@ -23,6 +24,7 @@ function App() {
           <Route path="/character/:characterId" element={<CharacterReports />} />
           <Route path="/add-theme" element={<ThemeForm />} />
           <Route path="/question" element={<QuestionForm />} />
+          <Route path="/result" element={<ResultPage />} />
           <Route path="/admin" element={<AdminPage />} />
 
         </Routes>

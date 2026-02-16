@@ -1,0 +1,137 @@
+.result-page {
+  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.result-page h1 {
+  font-size: 2.2rem;
+  color: #112233;
+  margin-bottom: 2rem;
+}
+
+.result-card {
+  background: linear-gradient(180deg, #ffffff, #fbfcff);
+  border: 1px solid #e6eefc;
+  padding: 2.5rem 2rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(2,6,23,0.06);
+  margin-bottom: 2rem;
+}
+
+.score-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.percentage {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #3b8ee6;
+  line-height: 1;
+}
+
+.correct-info {
+  font-size: 1.1rem;
+  color: #34495e;
+  font-weight: 600;
+}
+
+.feedback {
+  margin-top: 1.5rem;
+}
+
+.feedback p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.feedback .excellent {
+  background: linear-gradient(135deg, #fff4e6, #ffe6cc);
+  color: #a65410;
+}
+
+.feedback .very-good {
+  background: linear-gradient(135deg, #e9f8f3, #d4f0e8);
+  color: #0d6e5a;
+}
+
+.feedback .good {
+  background: linear-gradient(135deg, #e9f0ff, #d4e0ff);
+  color: #1e3a8a;
+}
+
+.feedback .fair {
+  background: linear-gradient(135deg, #fef3e6, #fce4cc);
+  color: #a65410;
+}
+
+.feedback .needs-work {
+  background: linear-gradient(135deg, #ffe6e6, #ffcccc);
+  color: #8b1515;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.retry-btn, .home-btn {
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.retry-btn {
+  background: linear-gradient(180deg, #5aa6ff, #3b8ee6);
+  color: white;
+}
+
+.retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(58,142,230,0.3);
+}
+
+.home-btn {
+  background: #fff;
+  border: 1px solid #dbe9ff;
+  color: #34495e;
+}
+
+.home-btn:hover {
+  background: #f0f4f9;
+}
+
+.back-btn {
+  padding: 0.7rem 1.5rem;
+  background: linear-gradient(180deg, #5aa6ff, #3b8ee6);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.error {
+  color: #c0392b;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 600px) {
+  .result-page { padding: 1rem; }
+  .percentage { font-size: 2.8rem; }
+  .actions { flex-direction: column; }
+  .retry-btn, .home-btn { width: 100%; }
+}

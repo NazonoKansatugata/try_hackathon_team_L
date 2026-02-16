@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './QuestionForm.css';
 
 function QuestionForm() {
-  // 回答フォーム向けの状態
+  const navigate = useNavigate();
 
   // 複数問題を配列で管理（うさこに関する〇×問題）
   const problems = [
@@ -10,21 +11,31 @@ function QuestionForm() {
       title: '問題1: うさこの生活リズム',
       body:
         '次の文は、うさこに関する記述です。該当するなら「〇」、該当しないなら「×」を選んでください。\n\n「うさこは夜により活動的で、昼は控えめに過ごす傾向がある。」',
+      correct: 'o',
     },
     {
       title: '問題2: 社交性について',
       body:
         '「うさこは人前で積極的に話すタイプである。」',
+      correct: 'o',
     },
     {
       title: '問題3: 好物に関する記述',
       body:
         '「うさこは甘いものが好きで、よくお菓子を食べる。」',
+      correct: 'o',
     },
     {
       title: '問題4: 秘密保持について',
       body:
         '「うさこは他人の秘密を守ることができる。」',
+      correct: 'o',
+    },
+    {
+      title: '問題5: 外見に関する記述',
+      body:
+        '「うさこの見た目は、他のキャラクターと比べてより個性的である。」',
+      correct: 'o',
     },
   ];
 
@@ -35,15 +46,13 @@ function QuestionForm() {
     setAnswers((prev) => ({ ...prev, [current]: val }));
   };
 
-  const handleNext = () => {
-    if (!answers[current]) {
-      alert('まず〇か×を選んでください。');
-      return;
-    }
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (current < problems.length - 1) setCurrent((c) => c + 1);
   };
 
-  const handlePrev = () => {
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (current > 0) setCurrent((c) => c - 1);
   };
 
@@ -56,13 +65,12 @@ function QuestionForm() {
       setCurrent(missing[0]);
       return;
     }
-    // 仮保存／表示
-    const summary = problems
-      .map((_, i) => `問題${i + 1}: ${answers[i] === 'o' ? '〇' : '×'}`)
-      .join('\n');
-    alert(`全ての回答を送信しました\n\n${summary}`);
-    setAnswers({});
-    setCurrent(0);
+    // 正答数を計算
+    const correctCount = problems.filter((p, i) => answers[i] === p.correct).length;
+    const percentage = Math.round((correctCount / problems.length) * 100);
+    
+    // 結果画面へ遷移
+    navigate('/result', { state: { percentage, correctCount, totalCount: problems.length } });
   };
 
   return (
@@ -99,7 +107,7 @@ function QuestionForm() {
           {current < problems.length - 1 ? (
             <button type="button" onClick={handleNext} className="nav primary">次へ</button>
           ) : (
-            <button type="submit" className="nav primary">すべて送信</button>
+            <button type="submit" className="nav primary">結果を見る</button>
           )}
         </div>
       </form>
