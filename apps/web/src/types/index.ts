@@ -18,3 +18,14 @@ export interface Report {
   title: string;
   content: string;
 }
+
+/**
+ * テーマの型定義
+ */
+export interface Theme {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  keywords: string[];
+}
