@@ -52,6 +52,14 @@ export class ConversationQualityAnalyzer {
     const similarityScore = 1 - Math.abs(similarity - idealSimilarity);
     score += similarityScore * 0.2;
 
+    // 詳細ログ出力（デバッグ用）
+    if (targetMessages.length >= 2) {
+      console.log(`   📐 類似度分析:`);
+      console.log(`      直前2発言の類似度: ${(similarity * 100).toFixed(1)}%`);
+      console.log(`      理想値との差: ${Math.abs(similarity - idealSimilarity).toFixed(2)}`);
+      console.log(`      キャラ多様性: ${characterTypes.size}/3キャラ`);
+    }
+
     return Math.min(1, Math.max(0, score)); // 0-1の範囲に正規化
   }
 

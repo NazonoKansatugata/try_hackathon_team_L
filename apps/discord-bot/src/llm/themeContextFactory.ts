@@ -65,11 +65,9 @@ export class ThemeContextSession {
     );
 
     if (shouldUpdate) {
-      console.log(
-        `📊 会話品質スコア: ${(qualityScore * 100).toFixed(1)}% (${this.turnsSinceLastUpdate}ターン経過)`
-      );
       const state = ConversationQualityAnalyzer.evaluateConversationState(qualityScore);
-      console.log(`状態: ${state} → シナリオを更新します`);
+      console.log(`\n🔄 シナリオ更新を開始します...`);
+      console.log(`   理由: ${state} 状態を検出`);
 
       const recentMessagesText = recentMessages
         .slice(-10)
@@ -77,6 +75,14 @@ export class ThemeContextSession {
         .join('\n');
 
       await this.context.updateScenario(recentMessagesText);
+
+      // 更新後のシナリオを表示
+      const updatedScenario = this.context.getScenario();
+      if (updatedScenario) {
+        console.log(`\n📝 【更新されたシナリオ】`);
+        console.log(`   ${updatedScenario.split('\n').join('\n   ')}`);
+      }
+      console.log();
 
       this.turnsSinceLastUpdate = 0;
       this.updateHistory.push({
@@ -112,6 +118,13 @@ export class ThemeContextSession {
    */
   getScenarioPrompt(): string {
     return this.context.getScenarioPrompt();
+  }
+
+  /**
+   * シナリオの中身を取得（不変）
+   */
+  getScenario(): string | null {
+    return this.context.getScenario();
   }
 
   /**

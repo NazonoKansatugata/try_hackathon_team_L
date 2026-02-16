@@ -189,8 +189,14 @@ export class BotManager {
       const qualityScore = ConversationQualityAnalyzer.calculateQualityScore(recentMessages);
       const conversationState = ConversationQualityAnalyzer.evaluateConversationState(qualityScore);
 
+      // 📊 会話評価をログ出力
+      console.log(`\n📊 【会話評価】`);
+      console.log(`   品質スコア: ${(qualityScore * 100).toFixed(1)}%`);
+      console.log(`   会話状態: ${conversationState === 'connected' ? '✅ つながっている' : conversationState === 'stagnant' ? '⚠️ 停滞' : '🔴 断絶'}`);
+
       // 次の発言者を事前に決定
       const nextSpeaker = this.selectNextCharacter(characterType);
+      console.log(`   次の発言者: ${nextSpeaker}\n`);
 
       // プロンプト構築
       let prompt = PromptBuilder.buildConversationPrompt(
@@ -207,6 +213,8 @@ export class BotManager {
         
         // 会話状態に応じた制御句を追加
         const controlPrompt = ConversationQualityAnalyzer.getControlPrompt(conversationState);
+        console.log(`🎯 【制御プロンプト】`);
+        console.log(`   ${controlPrompt.split('\n').join('\n   ')}\n`);
         prompt += `\n\n【会話状態制御】\n${controlPrompt}`;
       }
 
@@ -235,7 +243,13 @@ export class BotManager {
       
       // 品質スコアベースでシナリオを動的に更新
       if (this.themeContextSession) {
-        await this.themeContextSession.updateScenarioIfNeeded(recentMessages);
+        const updated = await this.themeContextSession.updateScenarioIfNeeded(recentMessages);
+        if (updated) {
+          const sessionInfo = this.themeContextSession.getSessionInfo();
+          console.log(`\n🔄 【シナリオ更新完了】`);
+          console.log(`   更新回数: ${sessionInfo.updateCount}回`);
+          console.log(`   前回更新からのターン数: ${sessionInfo.turnsSinceLastUpdate}\n`);
+        }
       }
       
       // 会話履歴が50個に達したらレポート生成
@@ -302,11 +316,24 @@ export class BotManager {
     // Firestoreからランダムなテーマを取得
     try {
       const theme = await getRandomTheme();
+      console.log(`\n🎨 【テーマ情報】`);
+      console.log(`   タイトル: ${theme.title}`);
+      console.log(`   説明: ${theme.description}`);
+      
       // セッション型のテーマコンテキストを作成（イミュータブル）
       this.themeContextSession = ThemeContextFactory.createSession(theme);
       
       // テーマの会話シナリオを生成
       await this.themeContextSession.generateScenario();
+      
+      console.log(`📝 【生成されたシナリオ】`);
+      const scenario = this.themeContextSession.getScenario();
+      if (scenario) {
+        console.log(`   ${scenario.split('\n').join('\n   ')}`);
+      } else {
+        console.log('   シナリオが生成されませんでした');
+      }
+      console.log();
       
     } catch (error) {
       console.warn('⚠️ テーマ取得またはシナリオ生成に失敗しました:', error);
