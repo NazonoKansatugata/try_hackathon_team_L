@@ -5,6 +5,9 @@ import { sampleCharacters } from '../../data/sampleData';
 import usakoDefault from '../../assets/usako.png';
 import nekokoDefault from '../../assets/nekoko.png';
 import kerokoDefault from '../../assets/keroko.png';
+import usakoIcon from '../../assets/usako-2.png';
+import nekokoIcon from '../../assets/nekoko-2.png';
+import kerokoIcon from '../../assets/keroko-2.png';
 import './CharacterList.css';
 
 /**
@@ -48,7 +51,9 @@ function CharacterList() {
           <div className="character-preview">
             {selected ? (
               <div className="preview-inner">
-                <img src={imageMap[selected.id]} alt={selected.name} className="preview-avatar" />
+                <div className="preview-avatar-wrap">
+                  <img src={imageMap[selected.id]} alt={selected.name} className="preview-avatar" />
+                </div>
                 <div className="preview-body">
                   <h2>{selected.name}</h2>
                   <p>{selected.description}</p>
@@ -73,7 +78,7 @@ function CharacterList() {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(usako); } }}
             >
               <div className="card-header">
-                <img src={usakoImg} alt={usako.name} className="avatar" />
+                <img src={usakoIcon} alt={usako.name} className="avatar" />
                 <h2>{usako.name}</h2>
               </div>
               <p>{usako.description}</p>
@@ -92,7 +97,7 @@ function CharacterList() {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(nekoko); } }}
             >
               <div className="card-header">
-                <img src={nekokoImg} alt={nekoko.name} className="avatar" />
+                <img src={nekokoIcon} alt={nekoko.name} className="avatar" />
                 <h2>{nekoko.name}</h2>
               </div>
               <p>{nekoko.description}</p>
@@ -111,7 +116,7 @@ function CharacterList() {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(keroko); } }}
             >
               <div className="card-header">
-                <img src={kerokoImg} alt={keroko.name} className="avatar" />
+                <img src={kerokoIcon} alt={keroko.name} className="avatar" />
                 <h2>{keroko.name}</h2>
               </div>
               <p>{keroko.description}</p>
