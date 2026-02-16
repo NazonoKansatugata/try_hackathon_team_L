@@ -43,6 +43,7 @@ function CharacterList() {
 
   const [selected, setSelected] = useState<Character | null>(usako ?? null);
   const [kerokoMode, setKerokoMode] = useState<'A' | 'B'>('A');
+  const [isAdmin, setIsAdmin] = useState(false);
   const profile = selected?.profile;
   const kerokoVariant = selected?.id === 'keroko' ? selected.profileVariants?.[kerokoMode] : undefined;
   const activeProfile = kerokoVariant ? { ...profile, ...kerokoVariant } : profile;
@@ -55,9 +56,31 @@ function CharacterList() {
     }
   }, [selected?.id]);
 
+  // 管理者権限を localStorage から読み込む
+  useEffect(() => {
+    const admin = localStorage.getItem('isAdmin') === 'true';
+    setIsAdmin(admin);
+  }, []);
+
   return (
     <div className="character-list" data-theme={themeId}>
       <h1>キャラクター紹介</h1>
+      <div className="nav-buttons-top">
+        {isAdmin && (
+          <Link to="/admin" className="admin-panel-btn">
+            <div className="admin-panel-content">
+              <span className="icon">⚙️</span>
+              <span className="text">管理画面へ</span>
+            </div>
+          </Link>
+        )}
+        <Link to="/question" className="question-panel-btn">
+          <div className="question-panel-content">
+            <span className="icon">❓</span>
+            <span className="text">問題に答える</span>
+          </div>
+        </Link>
+      </div>
       <div className="character-container">
         <div className="main">
           <div className="character-preview">
