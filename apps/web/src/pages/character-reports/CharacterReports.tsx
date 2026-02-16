@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useReports } from './useReport';
+import './CharacterReports.css'
 
 /**
  * キャラクター別レポート画面
