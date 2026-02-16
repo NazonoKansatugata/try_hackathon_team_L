@@ -1,4 +1,4 @@
-import type { Character, Report } from '../types';
+import type { Character} from '../types';
 
 /**
  * サンプルキャラクターデータ
@@ -24,41 +24,5 @@ export const sampleCharacters: Character[] = [
     id: 'keroko',
     name: 'けろこ',
     description: '性格切り替え可能。人格Aはおどおどして怖がり、人格Bは少しツンツンした性格。',
-  },
-];
-
-/**
- * サンプルレポートデータ
- * 
- * TODO: このデータを参考にして、各キャラクターのレポートを追加してください
- */
-export const sampleReports: Report[] = [
-  {
-    id: 1,
-    characterId: 'usako',
-    date: '2024-01-15',
-    title: '今日の冒険',
-    content: '今日は素晴らしい一日だった。朝から天気が良く、散歩に出かけた。',
-  },
-  {
-    id: 2,
-    characterId: 'usako',
-    date: '2024-01-14',
-    title: '新しい発見',
-    content: '図書館で面白い本を見つけた。明日も読み続けよう。',
-  },
-  {
-    id: 3,
-    characterId: 'nekoko',
-    date: '2024-01-15',
-    title: '友達との時間',
-    content: '久しぶりに友達と会って楽しい時間を過ごした。',
-  },
-  {
-    id: 4,
-    characterId: 'keroko',
-    date: '2024-01-13',
-    title: '新しい挑戦',
-    content: '今日は新しいことに挑戦してみた。最初は難しかったけど、楽しかった。',
   },
 ];
