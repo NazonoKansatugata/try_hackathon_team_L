@@ -1,7 +1,7 @@
 .character-list {
   padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .character-list h1 {
@@ -12,8 +12,26 @@
 
 .character-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .character-list {
+    padding: 1rem;
+  }
+  
+  .character-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .character-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
 }
 
 .character-card {
@@ -56,7 +74,15 @@
   background-color: #2980b9;
 }
 
-.character-card.sample {
-  border: 2px dashed #3498db;
-  background-color: #f8f9fa;
+
+.character-card.touch-panel {
+  border: 2px solid #4caf50;
+  background: linear-gradient(135deg, #e0f7fa 0%, #f1f8e9 100%);
+  box-shadow: 0 6px 24px rgba(76, 175, 80, 0.08);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.character-card.touch-panel:hover {
+  transform: scale(1.04);
+  box-shadow: 0 8px 32px rgba(76, 175, 80, 0.18);
 }
