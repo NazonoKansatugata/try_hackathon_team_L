@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Character } from '../../types';
 import { sampleCharacters } from '../../data/sampleData';
@@ -42,9 +42,21 @@ function CharacterList() {
   };
 
   const [selected, setSelected] = useState<Character | null>(usako ?? null);
+  const [kerokoMode, setKerokoMode] = useState<'A' | 'B'>('A');
+  const profile = selected?.profile;
+  const kerokoVariant = selected?.id === 'keroko' ? selected.profileVariants?.[kerokoMode] : undefined;
+  const activeProfile = kerokoVariant ? { ...profile, ...kerokoVariant } : profile;
+
+  const themeId = selected?.id ?? 'usako';
+
+  useEffect(() => {
+    if (selected?.id !== 'keroko') {
+      setKerokoMode('A');
+    }
+  }, [selected?.id]);
 
   return (
-    <div className="character-list">
+    <div className="character-list" data-theme={themeId}>
       <h1>キャラクター紹介</h1>
       <div className="character-container">
         <div className="main">
@@ -52,13 +64,77 @@ function CharacterList() {
             {selected ? (
               <div className="preview-inner">
                 <div className="preview-avatar-wrap">
+                  <span className="avatar-orbit" aria-hidden="true" />
                   <img src={imageMap[selected.id]} alt={selected.name} className="preview-avatar" />
                 </div>
                 <div className="preview-body">
-                  <h2>{selected.name}</h2>
-                  <p>{selected.description}</p>
+                  <div className="name-row">
+                    <h2>{selected.name}</h2>
+                    {activeProfile?.catchphrase && (
+                      <span className="catchphrase">{activeProfile.catchphrase}</span>
+                    )}
+                  </div>
+                  {selected.id === 'keroko' && selected.profileVariants && (
+                    <div className="persona-toggle" role="group" aria-label="けろこ人格切替">
+                      <button
+                        type="button"
+                        className={`persona-btn ${kerokoMode === 'A' ? 'is-active' : ''}`}
+                        onClick={() => setKerokoMode('A')}
+                      >
+                        A案
+                      </button>
+                      <button
+                        type="button"
+                        className={`persona-btn ${kerokoMode === 'B' ? 'is-active' : ''}`}
+                        onClick={() => setKerokoMode('B')}
+                      >
+                        B案
+                      </button>
+                    </div>
+                  )}
+                  <div className="stat-grid" aria-label="キャラクター概要">
+                    {activeProfile?.role && (
+                      <div className="stat">
+                        <span className="label">役割</span>
+                        <span className="value">{activeProfile.role}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="profile-block">
+                    <h3>紹介</h3>
+                    <p className="profile-text">{selected.description}</p>
+                  </div>
+
+                  <div className="tag-section">
+                    {activeProfile?.likes && activeProfile.likes.length > 0 && (
+                      <div className="tag-group">
+                        <span className="tag-label">好き</span>
+                        <div className="tags">
+                          {activeProfile.likes.map((item) => (
+                            <span key={`like-${item}`} className="tag">
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {activeProfile?.dislikes && activeProfile.dislikes.length > 0 && (
+                      <div className="tag-group">
+                        <span className="tag-label">苦手</span>
+                        <div className="tags">
+                          {activeProfile.dislikes.map((item) => (
+                            <span key={`dislike-${item}`} className="tag ghost">
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <Link to={`/character/${selected.id}`}>
-                    <button>レポートを見る</button>
+                    <button className="primary">レポートを見る</button>
                   </Link>
                 </div>
               </div>
@@ -81,10 +157,6 @@ function CharacterList() {
                 <img src={usakoIcon} alt={usako.name} className="avatar" />
                 <h2>{usako.name}</h2>
               </div>
-              <p>{usako.description}</p>
-              <Link to={`/character/${usako.id}`}>
-                <button>レポートを見る</button>
-              </Link>
             </div>
           )} 
 
@@ -100,10 +172,6 @@ function CharacterList() {
                 <img src={nekokoIcon} alt={nekoko.name} className="avatar" />
                 <h2>{nekoko.name}</h2>
               </div>
-              <p>{nekoko.description}</p>
-              <Link to={`/character/${nekoko.id}`}>
-                <button>レポートを見る</button>
-              </Link>
             </div>
           )} 
 
@@ -119,10 +187,6 @@ function CharacterList() {
                 <img src={kerokoIcon} alt={keroko.name} className="avatar" />
                 <h2>{keroko.name}</h2>
               </div>
-              <p>{keroko.description}</p>
-              <Link to={`/character/${keroko.id}`}>
-                <button>レポートを見る</button>
-              </Link>
             </div>
           )} 
         </aside>
