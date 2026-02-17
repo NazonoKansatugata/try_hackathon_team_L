@@ -4,11 +4,10 @@ import { getAllQuestions } from '../admin/fetchData';
 import type { Question } from '../../types';
 import './QuestionForm.css';
 
+const DEFAULT_PROBLEMS: (Question & { id: string })[] = [];
+
 function QuestionForm() {
   const navigate = useNavigate();
-
-  // 複数問題を配列で管理（うさこに関する〇×問題）
-  const defaultProblems: (Question & { id: string })[] = [];
 
   const [problems, setProblems] = useState<(Question & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,13 +40,13 @@ function QuestionForm() {
         } else {
           // フォールバック：デフォルト問題を使用
           console.warn('登録済み問題がないため、デフォルト問題を使用します');
-          const shuffled = shuffleArray(defaultProblems);
+          const shuffled = shuffleArray(DEFAULT_PROBLEMS);
           setProblems(shuffled);
         }
       } catch (error) {
         console.error('問題の読み込みに失敗しました', error);
         // エラー時もデフォルト問題を使用
-        const shuffled = shuffleArray(defaultProblems);
+        const shuffled = shuffleArray(DEFAULT_PROBLEMS);
         setProblems(shuffled);
       } finally {
         setLoading(false);

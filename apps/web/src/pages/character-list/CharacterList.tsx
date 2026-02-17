@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Character } from '../../types';
 import { sampleCharacters } from '../../data/sampleData';
@@ -31,10 +31,10 @@ function CharacterList() {
   const keroko = sampleCharacters.find(c => c.id === 'keroko');
 
   // 環境変数から画像パスを読み取り（無ければデフォルト画像を使用）
-  const env = (import.meta as any).env || {};
-  const usakoImg = env.VITE_USAKO_IMAGE ?? usakoDefault;
-  const nekokoImg = env.VITE_NEKOKO_IMAGE ?? nekokoDefault;
-  const kerokoImg = env.VITE_KEROKO_IMAGE ?? kerokoDefault;
+  const { VITE_USAKO_IMAGE, VITE_NEKOKO_IMAGE, VITE_KEROKO_IMAGE } = import.meta.env;
+  const usakoImg = VITE_USAKO_IMAGE ?? usakoDefault;
+  const nekokoImg = VITE_NEKOKO_IMAGE ?? nekokoDefault;
+  const kerokoImg = VITE_KEROKO_IMAGE ?? kerokoDefault;
   const imageMap: Record<string, string> = {
     usako: usakoImg,
     nekoko: nekokoImg,
@@ -43,24 +43,19 @@ function CharacterList() {
 
   const [selected, setSelected] = useState<Character | null>(usako ?? null);
   const [kerokoMode, setKerokoMode] = useState<'A' | 'B'>('A');
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
   const profile = selected?.profile;
   const kerokoVariant = selected?.id === 'keroko' ? selected.profileVariants?.[kerokoMode] : undefined;
   const activeProfile = kerokoVariant ? { ...profile, ...kerokoVariant } : profile;
 
   const themeId = selected?.id ?? 'usako';
 
-  useEffect(() => {
-    if (selected?.id !== 'keroko') {
+  const handleSelect = (character: Character) => {
+    setSelected(character);
+    if (character.id !== 'keroko') {
       setKerokoMode('A');
     }
-  }, [selected?.id]);
-
-  // 管理者権限を localStorage から読み込む
-  useEffect(() => {
-    const admin = localStorage.getItem('isAdmin') === 'true';
-    setIsAdmin(admin);
-  }, []);
+  };
 
   return (
     <div className="character-list" data-theme={themeId}>
@@ -179,8 +174,8 @@ function CharacterList() {
               className={`character-card touch-panel small-card ${selected?.id === 'usako' ? 'selected' : ''}`}
               role="button"
               tabIndex={0}
-              onClick={() => setSelected(usako)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(usako); } }}
+              onClick={() => handleSelect(usako)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelect(usako); } }}
             >
               <div className="card-header">
                 <img src={usakoIcon} alt={usako.name} className="avatar" />
@@ -194,8 +189,8 @@ function CharacterList() {
               className={`character-card touch-panel small-card ${selected?.id === 'nekoko' ? 'selected' : ''}`}
               role="button"
               tabIndex={0}
-              onClick={() => setSelected(nekoko)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(nekoko); } }}
+              onClick={() => handleSelect(nekoko)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelect(nekoko); } }}
             >
               <div className="card-header">
                 <img src={nekokoIcon} alt={nekoko.name} className="avatar" />
@@ -209,8 +204,8 @@ function CharacterList() {
               className={`character-card touch-panel small-card ${selected?.id === 'keroko' ? 'selected' : ''}`}
               role="button"
               tabIndex={0}
-              onClick={() => setSelected(keroko)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(keroko); } }}
+              onClick={() => handleSelect(keroko)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelect(keroko); } }}
             >
               <div className="card-header">
                 <img src={kerokoIcon} alt={keroko.name} className="avatar" />

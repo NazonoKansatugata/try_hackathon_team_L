@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useReports } from './useReport';
 import { sampleCharacters } from '../../data/sampleData';
+import type { Report } from '../../types';
 import usakoIcon from '../../assets/usako-2.png';
 import nekokoIcon from '../../assets/nekoko-2.png';
 import kerokoIcon from '../../assets/keroko-2.png';
@@ -21,6 +22,8 @@ const CHAR_CONFIG = {
   nekoko: { name: 'ねここ', icon: nekokoIcon },
   keroko: { name: 'けろこ', icon: kerokoIcon },
 };
+
+type ReportWithMessageCount = Report & { messageCount?: number };
 function CharacterReports() {
   // URLパラメータからキャラクターIDを取得
   const { characterId } = useParams<{ characterId: string }>();
@@ -74,24 +77,27 @@ function CharacterReports() {
             <div className="empty-state">まだ日記がありません🍃</div>
           )}
 
-          {reports.map((report) => (
-            <article key={report.id} className="report-entry">
-              <div className="report-meta">
-                <span className="report-date">📅 {report.date}</span>
-                {(report as any).messageCount !== undefined && (
-                  <span className="message-badge">
-                    💬 おしゃべり: {(report as any).messageCount}回
-                  </span>
-                )}
-              </div>
+          {reports.map((report) => {
+            const messageCount = (report as ReportWithMessageCount).messageCount;
+            return (
+              <article key={report.id} className="report-entry">
+                <div className="report-meta">
+                  <span className="report-date">📅 {report.date}</span>
+                  {messageCount !== undefined && (
+                    <span className="message-badge">
+                      💬 おしゃべり: {messageCount}回
+                    </span>
+                  )}
+                </div>
 
-              <div className="report-content">
-                {(report.content || '').split('\n').map((line, i) => (
-                  <p key={i}>{line}</p>
-                ))}
-              </div>
-            </article>
-          ))}
+                <div className="report-content">
+                  {(report.content || '').split('\n').map((line, i) => (
+                    <p key={i}>{line}</p>
+                  ))}
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
     </div>
