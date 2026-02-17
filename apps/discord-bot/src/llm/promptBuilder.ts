@@ -117,12 +117,20 @@ export class PromptBuilder {
 
     // 会話履歴の整形
     const historyText = this.formatHistory(conversationHistory, characterType);
+    
+    // 会話開始判定（履歴が3ターン未満）
+    const isConversationStart = conversationHistory.length < 3;
 
     // テーマがある場合
     const themeText = theme ? `\n【会話のテーマ】\n${theme}\n` : '';
     
     // 次の発言者情報
     const nextSpeakerText = `\n【次の発言者】\n${this.getCharacterName(nextSpeaker)}\n`;
+
+    // 会話開始時と進行中で異なる指示を提供
+    const instructions = isConversationStart 
+      ? this.getStartingInstructions(characterType, theme)
+      : this.getContinuingInstructions(characterType);
 
     // プロンプト構築
     const prompt = `${systemPrompt}
@@ -131,16 +139,42 @@ ${themeText}${nextSpeakerText}
 【これまでの会話】
 ${historyText}
 
-【指示】
-上記の会話の流れを受けて、${this.getCharacterName(characterType)}として自然に発言してください。
-あなたの性格・口調を守り、会話の文脈に沿った返答をしてください。
-発言のみを出力し、説明や注釈は不要です。
-鍵括弧（「」）は使用しないでください。
-また、会話の展開や進行を意識し、停滞を避けるようにしてください。
+${instructions}
 
 ${this.getCharacterName(characterType)}の発言:`;
 
     return prompt;
+  }
+
+  /**
+   * 会話開始時の指示を生成
+   */
+  private static getStartingInstructions(characterType: CharacterType, theme?: string): string {
+    let instructions = `【指示】
+これは会話の開始です。物語の場面を自然に切り出し、テーマの世界を体験する流れを作ってください。`;
+
+    if (theme) {
+      instructions += `\nテーマ「${theme}」という状況で、3人が一緒にいることを感じさせ、自然に話題を展開してください。`;
+    }
+
+    instructions += `
+何かを感じたり、状況に気づいた様子を表現し、3人の物語への引き込みを大切にしてください。
+発言のみを出力し、説明や注釈は不要です。
+鍵括弧（「」）は使用しないでください。`;
+
+    return instructions;
+  }
+
+  /**
+   * 会話進行中の指示を生成
+   */
+  private static getContinuingInstructions(characterType: CharacterType): string {
+    return `【指示】
+上記の会話の流れを受けて、${this.getCharacterName(characterType)}として自然に発言してください。
+あなたの性格・口調を守り、会話の文脈に沿った返答をしてください。
+発言のみを出力し、説明や注釈は不要です。
+鍵括弧（「」）は使用しないでください。
+また、会話の展開や進行を意識し、停滞を避けるようにしてください。`;
   }
 
   /**

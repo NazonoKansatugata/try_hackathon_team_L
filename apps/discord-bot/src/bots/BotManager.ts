@@ -187,12 +187,16 @@ export class BotManager {
       // 会話品質スコアを計算
       const recentMessages = this.conversationHistory.getRecent(10);
       const qualityScore = ConversationQualityAnalyzer.calculateQualityScore(recentMessages);
-      const conversationState = ConversationQualityAnalyzer.evaluateConversationState(qualityScore);
+      const conversationState = ConversationQualityAnalyzer.evaluateConversationState(qualityScore, recentMessages);
 
       // 📊 会話評価をログ出力
       console.log(`\n📊 【会話評価】`);
       console.log(`   品質スコア: ${(qualityScore * 100).toFixed(1)}%`);
-      console.log(`   会話状態: ${conversationState === 'connected' ? '✅ つながっている' : conversationState === 'stagnant' ? '⚠️ 停滞' : '🔴 断絶'}`);
+      const stateLabel = conversationState === 'opening' ? '🌟 会話開始' 
+        : conversationState === 'connected' ? '✅ つながっている' 
+        : conversationState === 'stagnant' ? '⚠️ 停滞' 
+        : '🔴 断絶';
+      console.log(`   会話状態: ${stateLabel}`);
 
       // 次の発言者を事前に決定
       const nextSpeaker = this.selectNextCharacter(characterType);
