@@ -44,6 +44,7 @@ function CharacterList() {
   const [selected, setSelected] = useState<Character | null>(usako ?? null);
   const [kerokoMode, setKerokoMode] = useState<'A' | 'B'>('A');
   const [isAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
+  const [showTutorial, setShowTutorial] = useState(false);
   const profile = selected?.profile;
   const kerokoVariant = selected?.id === 'keroko' ? selected.profileVariants?.[kerokoMode] : undefined;
   const activeProfile = kerokoVariant ? { ...profile, ...kerokoVariant } : profile;
@@ -61,6 +62,14 @@ function CharacterList() {
     <div className="character-list" data-theme={themeId}>
       <h1>キャラクター紹介</h1>
       <div className="nav-buttons-top">
+      <button
+        className="tutorial-trigger-btn question-panel-btn"
+        onClick={() => setShowTutorial(true)}>
+          <div className="question-panel-content">
+            <span className="icon">❔</span>
+          </div>
+        </button>
+      <div className="nav-right-group">
         {isAdmin && (
           <Link to="/admin" className="admin-panel-btn">
             <div className="admin-panel-content">
@@ -82,6 +91,18 @@ function CharacterList() {
           </div>
         </Link>
       </div>
+    </div>
+
+      {showTutorial && (
+        <div className="tutorial-overlay" onClick={() => setShowTutorial(false)}>
+          <div className="tutorial-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="close-tutorial-btn" onClick={() => setShowTutorial(false)}>
+              x
+            </button>
+            
+          </div>
+        </div>
+      )}
       <div className="character-container">
         <div className="main">
           <div className="character-preview">
