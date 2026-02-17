@@ -61,8 +61,9 @@ export default function AdminPage() {
               // 問題一覧の削除はリアルタイムリスナーが自動反映
             }
             alert("削除しました");
-        } catch (error) {
-            alert("削除に失敗しました");
+        } catch (err) {
+          console.error("削除に失敗しました", err);
+          alert("削除に失敗しました");
         }
     };
 
