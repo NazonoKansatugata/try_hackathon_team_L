@@ -98,11 +98,10 @@ export class ThemeContextSession {
   }
 
   /**
-   * 會話状態に応じたプロンプト制御を取得
+   * 会話状態に応じたプロンプト制御を取得
    */
-  getStateControlledPrompt(): string {
-    // 会話履歴の長さから状態を判定
-    const recentMessages = this.conversationHistory.getRecent(10);
+  getStateControlledPrompt(recentMessages: ConversationMessage[]): string {
+    // 会話履歴から状態を判定
     const qualityScore = ConversationQualityAnalyzer.calculateQualityScore(recentMessages);
     const state = ConversationQualityAnalyzer.evaluateConversationState(qualityScore, recentMessages);
     
