@@ -1,0 +1,77 @@
+.not-found-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at 10% 10%, rgba(255, 220, 150, 0.35), transparent 45%),
+              radial-gradient(circle at 90% 20%, rgba(162, 228, 241, 0.35), transparent 40%),
+              linear-gradient(140deg, #fffaf0 0%, #f3f0e8 40%, #f8f5ef 100%);
+  text-align: center;
+  color: #1f2a44;
+}
+
+.not-found-content {
+  padding: 2rem;
+  animation: fadeIn 0.5s ease;
+}
+
+.error-code {
+  font-size: 6rem;
+  font-weight: bold;
+  color: #f39c12; /* うさこ部のアクセントカラー */
+  line-height: 1;
+  margin-bottom: 1rem;
+  font-family: 'Shippori Mincho B1', serif;
+}
+
+.not-found-content h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.not-found-content p {
+  color: #666;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.back-home-btn {
+  padding: 0.8rem 2rem;
+  background: #1f2a44;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.back-home-btn:hover {
+  transform: scale(1.05);
+  background: #2c3e50;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 既存の .not-found-image をこれに書き換えてください */
+.not-found-image {
+  /* ✨ ここがポイント：幅を100%にして画面に合わせる */
+  width: 100%;
+  
+  /* PCなどで大きくなりすぎないように上限を決める（お好みで 500px〜800px に） */
+  max-width: 600px;
+  
+  /* 縦横比を維持する（これがないと画像が伸びてしまいます） */
+  height: auto;
+  
+  /* 中央揃え */
+  display: block;
+  margin: 0 auto 1.5rem;
+  
+  /* アニメーションなどはそのまま */
+  opacity: 0.9;
+  animation: float 6s ease-in-out infinite;
+}
