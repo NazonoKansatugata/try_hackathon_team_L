@@ -17,6 +17,7 @@ export class CharacterBot {
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildVoiceStates,
       ],
     });
 
@@ -113,6 +114,13 @@ export class CharacterBot {
    */
   getConfig(): CharacterConfig {
     return this.config;
+  }
+
+  /**
+   * クライアント取得
+   */
+  getClient(): Client {
+    return this.client;
   }
 
   /**

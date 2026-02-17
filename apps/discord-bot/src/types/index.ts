@@ -105,3 +105,37 @@ export interface DailyReport {
   timestamp: Date;
   messageCount: number;
 }
+
+/**
+ * TTS設定
+ */
+export interface TTSConfig {
+  apiUrl: string;
+  enabled: boolean;
+}
+
+/**
+ * 音声プロファイル
+ */
+export interface VoiceProfile {
+  pitch: number;      // 音の高さ (0.5 ~ 2.0)
+  speed: number;      // 話す速度 (0.5 ~ 2.0)
+  volume: number;     // 音量 (0.0 ~ 1.0)
+  voiceId: string;    // Qwen3の音声ID
+}
+
+/**
+ * TTS リクエスト
+ */
+export interface TTSRequest {
+  text: string;
+  voiceProfile: VoiceProfile;
+}
+
+/**
+ * 音声チャンネル設定
+ */
+export interface VoiceChannelConfig {
+  channelId: string;
+  enabled: boolean;
+}

@@ -1,5 +1,5 @@
 import { CharacterBot } from './CharacterBot.js';
-import { characters, botConfig } from '../config/index.js';
+import { characters, botConfig, ttsConfig, voiceChannelConfig } from '../config/index.js';
 import { CharacterType, DailyReport } from '../types/index.js';
 import { OllamaClient } from '../ollama/client.js';
 import { PromptBuilder } from '../llm/promptBuilder.js';
@@ -9,6 +9,7 @@ import { ThemeContextFactory, ThemeContextSession } from '../llm/themeContextFac
 import { ReportPromptBuilder } from '../llm/reportPromptBuilder.js';
 import { ConversationQualityAnalyzer } from '../analysis/conversationQualityAnalyzer.js';
 import { ErrorRecoveryManager } from './errorRecoveryManager.js';
+import { VoiceManager } from '../tts/voiceManager.js';
 
 /**
  * 複数のBotを管理するマネージャークラス
@@ -27,11 +28,17 @@ export class BotManager {
   private isGenerating: boolean = false;
   private shouldCancelGeneration: boolean = false;
   private humanInterventionData: { username: string; content: string } | null = null;
+  private voiceManager: VoiceManager | null = null;
 
   constructor() {
     this.ollamaClient = new OllamaClient();
     this.conversationHistory = new ConversationHistory();
     this.errorRecoveryManager = new ErrorRecoveryManager();
+    
+    // TTS機能が有効な場合のみVoiceManagerを初期化
+    if (ttsConfig.enabled) {
+      this.voiceManager = new VoiceManager(ttsConfig.apiUrl);
+    }
   }
 
   /**
@@ -82,6 +89,11 @@ export class BotManager {
           this.handleHumanMessage(username, content, channelId);
         });
         console.log('✅ 人間のメッセージハンドラーを設定しました（うさこBotのみ）');
+      }
+
+      // 音声チャンネルに接続
+      if (this.voiceManager && voiceChannelConfig.enabled && voiceChannelConfig.channelId) {
+        await this.connectToVoiceChannel();
       }
 
     } catch (error) {
@@ -159,7 +171,59 @@ export class BotManager {
       return;
     }
 
+    // テキストメッセージを送信
     await bot.sendMessage(botConfig.channelId, content);
+
+    // 音声でも配信（TTS有効時）
+    if (this.voiceManager && voiceChannelConfig.enabled) {
+      try {
+        await this.voiceManager.speak(content, characterType);
+      } catch (error) {
+        console.error('❌ 音声配信エラー:', error);
+        // 音声配信の失敗はテキストメッセージの送信を妨げない
+      }
+    }
+  }
+
+  /**
+   * 音声チャンネルに接続
+   */
+  private async connectToVoiceChannel(): Promise<void> {
+    if (!this.voiceManager) {
+      return;
+    }
+
+    try {
+      console.log('🔊 音声チャンネルに接続中...');
+
+      // うさこBotのクライアントを使用して音声チャンネルを取得
+      const usakoBot = this.bots.get('usako');
+      if (!usakoBot) {
+        throw new Error('うさこBotが見つかりません');
+      }
+
+      const client = usakoBot.getClient();
+      const guild = await client.guilds.fetch(botConfig.guildId);
+      const voiceChannel = await guild.channels.fetch(voiceChannelConfig.channelId);
+
+      if (!voiceChannel || !voiceChannel.isVoiceBased()) {
+        throw new Error('音声チャンネルが見つかりません');
+      }
+
+      // VoiceChannel型として扱う（StageChannelの可能性もあるが、VoiceManagerが対応）
+      await this.voiceManager.connect(voiceChannel as any);
+
+      // TTS接続テスト
+      const isTTSHealthy = await this.voiceManager.testTTSConnection();
+      if (!isTTSHealthy) {
+        console.warn('⚠️ TTS APIへの接続に失敗しました。音声配信は利用できません。');
+      } else {
+        console.log('✅ TTS APIに接続しました');
+      }
+    } catch (error) {
+      console.error('❌ 音声チャンネル接続エラー:', error);
+      console.warn('⚠️ 音声配信機能は無効化されます');
+    }
   }
 
 
@@ -486,6 +550,11 @@ export class BotManager {
     console.log('🛑 全Botをシャットダウン中...');
     this.isConversationActive = false;
     this.isRunning = false;
+
+    // 音声チャンネルから切断
+    if (this.voiceManager) {
+      this.voiceManager.disconnect();
+    }
 
     for (const bot of this.bots.values()) {
       await bot.shutdown();
