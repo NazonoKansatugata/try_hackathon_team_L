@@ -1,149 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;600;700&display=swap');
+
+/* --- ページ全体のコンテナ --- */
 .theme-form-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  --ink: #1f2a44;
+  --accent: #f39c12;
+  --accent-2: #f6b23f;
+  --accent-glow: rgba(243, 156, 18, 0.35);
+  --surface-soft: #f7f5f1;
+  --line: rgba(31, 42, 68, 0.12);
+
+  /* アプリ共通の背景 */
+  background: radial-gradient(circle at 10% 10%, rgba(255, 220, 150, 0.35), transparent 45%),
+    radial-gradient(circle at 90% 20%, rgba(162, 228, 241, 0.35), transparent 40%),
+    linear-gradient(140deg, #fffaf0 0%, #f3f0e8 40%, #f8f5ef 100%);
+
   min-height: 100vh;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.theme-form-wrapper {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  padding: 40px;
-  max-width: 500px;
   width: 100%;
+  padding: 2.5rem; /* 他のページと同じ余白 */
+  box-sizing: border-box;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  color: var(--ink);
 }
 
+/* --- コンテンツ部分（カードの見た目を削除） --- */
+.theme-form-wrapper {
+  /* ✨ ボックス（カード）の見た目を削除して透明に */
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  backdrop-filter: none;
+
+  /* 画面全体を使うが、文字が読みやすいように最大幅だけ制限 */
+  /* ※もし「入力欄も画面端まで完全に伸ばしたい」場合は max-width を削除してください */
+  width: 100%;
+  max-width: 800px; 
+  margin: 0 auto; /* 左右中央には配置 */
+}
+
+/* タイトル周り */
 .theme-form-wrapper h1 {
-  color: #333;
-  margin-bottom: 8px;
-  font-size: 28px;
-  text-align: center;
+  text-align: left; /* 左寄せに変更（お好みで center でもOK） */
+  margin-bottom: 0.5rem;
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  letter-spacing: 0.05em;
+  color: var(--ink);
 }
 
 .subtitle {
-  color: #666;
-  text-align: center;
-  margin-bottom: 30px;
-  font-size: 14px;
+  text-align: left; /* 左寄せに変更 */
+  color: #3e4a61;
+  margin-bottom: 3rem;
+  font-size: 1rem;
 }
 
+/* --- メッセージ系 --- */
 .error-message {
-  background-color: #fee;
-  border-left: 4px solid #f44;
-  color: #c33;
-  padding: 12px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  font-size: 14px;
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #ff4d4f;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
 }
 
 .success-message {
-  background-color: #efe;
-  border-left: 4px solid #4f4;
-  color: #3a3;
-  padding: 12px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  font-size: 14px;
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+  color: #52c41a;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
 }
 
+/* --- フォームレイアウト --- */
 .theme-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 2rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .form-group label {
-  color: #333;
-  font-weight: 600;
-  font-size: 14px;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 
 .form-group input,
 .form-group textarea,
 .form-group select {
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 1rem;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  font-size: 1rem;
   font-family: inherit;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  background-color: rgba(255, 255, 255, 0.6); /* 背景に少し白を乗せる */
+  transition: all 0.2s ease;
 }
 
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--accent);
+  background-color: #fff;
+  box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .form-group small {
-  color: #999;
-  font-size: 12px;
+  color: #666;
+  font-size: 0.85rem;
+  margin-top: 0.2rem;
 }
 
+/* --- ボタンエリア --- */
 .form-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 10px;
+  gap: 1.5rem;
+  margin-top: 2rem;
 }
 
 .btn-submit,
 .btn-cancel {
-  flex: 1;
-  padding: 12px;
+  padding: 1rem 2rem;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 50px; /* 丸いボタンに */
+  font-size: 1rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s ease;
+  min-width: 160px;
 }
 
 .btn-submit {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .btn-submit:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 20px var(--accent-glow);
 }
 
 .btn-submit:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  background: #ccc;
+  box-shadow: none;
 }
 
 .btn-cancel {
-  background-color: #f0f0f0;
-  color: #333;
+  background-color: transparent;
+  color: #3e4a61;
+  border: 2px solid var(--line);
 }
 
 .btn-cancel:hover {
-  background-color: #e0e0e0;
+  background-color: rgba(31, 42, 68, 0.05);
+  color: var(--ink);
 }
 
+/* スマホ対応 */
 @media (max-width: 600px) {
-  .theme-form-wrapper {
-    padding: 24px;
+  .theme-form-container {
+    padding: 1.5rem;
   }
-
-  .theme-form-wrapper h1 {
-    font-size: 22px;
-  }
-
+  
   .form-actions {
-    flex-direction: column;
+    flex-direction: column-reverse;
+  }
+  
+  .btn-submit, .btn-cancel {
+    width: 100%;
   }
 }
