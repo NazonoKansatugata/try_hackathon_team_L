@@ -48,9 +48,8 @@ export class OllamaClient {
         signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
+        clearTimeout(timeoutId);
         throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
       }
 
@@ -94,6 +93,9 @@ export class OllamaClient {
           }
         }
       }
+
+      // タイムアウトをクリア（ストリーミング完了後）
+      clearTimeout(timeoutId);
 
       console.log(); // 改行
 
