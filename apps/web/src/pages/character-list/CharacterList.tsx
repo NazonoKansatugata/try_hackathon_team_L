@@ -66,7 +66,7 @@ function CharacterList() {
         className="tutorial-trigger-btn question-panel-btn"
         onClick={() => setShowTutorial(true)}>
           <div className="question-panel-content">
-            <span className="icon">❔</span>
+            <span className="text">使い方</span>
           </div>
         </button>
       <div className="nav-right-group">
@@ -97,9 +97,72 @@ function CharacterList() {
         <div className="tutorial-overlay" onClick={() => setShowTutorial(false)}>
           <div className="tutorial-modal" onClick={(e) => e.stopPropagation()}>
             <button className="close-tutorial-btn" onClick={() => setShowTutorial(false)}>
-              x
+              ｘ
             </button>
-            
+            <div className="tutorial-content">
+              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>おしゃべりうさこ部の歩き方</h2>
+              
+              {/* ステップ1: キャラクター */}
+              <div className="tutorial-step">
+                <div className="step-number">1</div>
+                <div className="step-text">
+                  <h3>うさこ部のキャラを知ろう！</h3>
+                  <p>
+                    右側（スマホは下）のパネルからキャラをタップ！<br/>
+                    性格や「好き・嫌い」をチェックしましょう。<br/>
+                    <small style={{ color: '#888' }}>※「けろこ」はボタンで人格が入れ替わります。</small>
+                  </p>
+                </div>
+              </div>
+
+              {/* ステップ2: レポート */}
+              <div className="tutorial-step">
+                <div className="step-number">2</div>
+                <div className="step-text">
+                  <h3>日誌を読んでみよう！</h3>
+                  <p>
+                    「レポートを見る」ボタンを押すと、日々の会話ログが読めます。<br/>
+                    キャラごとの口調の違いを楽しんでください。
+                  </p>
+                </div>
+              </div>
+
+              {/* ステップ3: テーマ投稿 */}
+              <div className="tutorial-step">
+                <div className="step-number">3</div>
+                <div className="step-text">
+                  <h3>会話のテーマを提供しよう！</h3>
+                  <p>
+                    上部の「✍️ テーマを追加」から、みんなに話してほしい話題を投稿できます。
+                    あなたの投稿したテーマで会話が弾むかも？
+                  </p>
+                </div>
+              </div>
+
+              {/* ステップ4: 隠し要素（特別デザイン） */}
+              <div className="tutorial-step" style={{ 
+                background: '#fffbeb', 
+                padding: '12px', 
+                borderRadius: '8px', 
+                border: '2px dashed #f59e0b',
+                marginTop: '1rem'
+              }}>
+                <div className="step-number" style={{ background: '#f59e0b' }}>?</div>
+                <div className="step-text">
+                  <h3 style={{ color: '#d97706' }}>隠された「管理者権限」...</h3>
+                  <p style={{ color: '#92400e' }}>
+                    「❓ 問題に答える」でクイズに挑戦しましょう。<br/>
+                    <strong>正解率80%以上</strong>を叩き出すと、秘密の「⚙️ 管理画面」への入り口が開放されます！
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+                <button className="primary" onClick={() => setShowTutorial(false)}>
+                  わかった！
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
