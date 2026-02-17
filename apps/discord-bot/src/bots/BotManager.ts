@@ -37,7 +37,7 @@ export class BotManager {
     
     // TTS機能が有効な場合のみVoiceManagerを初期化
     if (ttsConfig.enabled) {
-      this.voiceManager = new VoiceManager(ttsConfig.apiUrl);
+      this.voiceManager = new VoiceManager();
     }
   }
 

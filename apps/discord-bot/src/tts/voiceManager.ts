@@ -24,30 +24,34 @@ export class VoiceManager {
   private isPlaying: boolean = false;
   private audioQueue: Array<{ text: string; profile: VoiceProfile }> = [];
 
-  // キャラクターごとの音声プロファイル
+  // キャラクターごとの音声プロファイル（Qwen3-TTS CustomVoice対応）
   private readonly voiceProfiles: Record<CharacterType, VoiceProfile> = {
     usako: {
-      pitch: 1.3,        // 高めの声
-      speed: 1.0,        // 標準速度
-      volume: 0.8,       // やや控えめ
-      voiceId: 'ja-JP-female-1',
+      speaker: 'Vivian',      // 明るい若い女性 - うさこのキャラに最適
+      language: 'Japanese',
+      instruct: '明るくポジティブな少女のように話してください',
     },
     nekoko: {
-      pitch: 1.1,        // やや高め
-      speed: 0.95,       // ゆっくりめ
-      volume: 0.85,      // 標準
-      voiceId: 'ja-JP-female-2',
+      speaker: 'Serena',      // 優しい若い女性 - ねここのキャラに最適
+      language: 'Japanese',
+      instruct: '優しく穏やかな少女のように話してください',
     },
     keroko: {
-      pitch: 0.9,        // やや低め
-      speed: 1.15,       // 早口
-      volume: 0.9,       // 元気
-      voiceId: 'ja-JP-female-3',
+      speaker: 'Ryan',        // ダイナミック男性 - けろこのキャラに最適
+      language: 'Japanese',
+      instruct: 'やや低めで元気な男性らしく話してください',
     },
   };
 
-  constructor(ttsApiUrl?: string) {
-    this.ttsClient = new TTSClient(ttsApiUrl);
+  // ボリューム調整（キャラクターごと）
+  private readonly volumeProfiles: Record<CharacterType, number> = {
+    usako: 0.8,   // 標準
+    nekoko: 0.85, // やや大きめ
+    keroko: 0.9,  // 大きめ
+  };
+
+  constructor() {
+    this.ttsClient = new TTSClient();
     this.audioPlayer = createAudioPlayer();
     this.setupAudioPlayer();
   }
@@ -184,6 +188,12 @@ export class VoiceManager {
     if (!item) return;
 
     try {
+      // キャラクターのボリュームを取得
+      const characterType = Object.keys(this.voiceProfiles).find(
+        ch => JSON.stringify(this.voiceProfiles[ch as CharacterType]) === JSON.stringify(item.profile)
+      ) as CharacterType | undefined;
+      const volume = characterType ? this.volumeProfiles[characterType] : 0.8;
+
       // TTSで音声生成
       const audioStream = await this.ttsClient.textToSpeech(item.text, item.profile);
       
@@ -193,11 +203,11 @@ export class VoiceManager {
       });
 
       // ボリューム調整
-      resource.volume?.setVolume(item.profile.volume);
+      resource.volume?.setVolume(volume);
 
       // 再生
       this.audioPlayer.play(resource);
-      console.log(`▶️ 音声再生開始`);
+      console.log(`▶️ 音声再生開始 (ボリューム: ${volume})`);
     } catch (error) {
       console.error('❌ 音声再生エラー:', error);
       this.isPlaying = false;
@@ -223,10 +233,21 @@ export class VoiceManager {
   }
 
   /**
-   * TTS APIの接続テスト
+   * TTS APIの接続テスト（実際に音声を再生）
    */
   async testTTSConnection(): Promise<boolean> {
-    return await this.ttsClient.testConnection();
+    try {
+      console.log('🔍 Qwen3-TTS接続テスト中（音声再生あり）...');
+      
+      // 各キャラクターの音声を短くテスト
+      await this.speak('テストです', 'usako');
+      
+      console.log('✅ TTS接続テスト成功 - 音声を再生しました');
+      return true;
+    } catch (error) {
+      console.error('❌ TTS接続テスト失敗:', error);
+      return false;
+    }
   }
 
   /**

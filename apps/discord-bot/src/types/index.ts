@@ -107,21 +107,24 @@ export interface DailyReport {
 }
 
 /**
- * TTS設定
+ * Qwen3-TTS設定
  */
-export interface TTSConfig {
-  apiUrl: string;
+export interface Qwen3TTSConfig {
+  modelName: string;  // "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
+  deviceMap: string;  // "cuda:0" or "cpu"
+  dtype: string;      // "torch.bfloat16" or "torch.float16"
   enabled: boolean;
 }
 
 /**
- * 音声プロファイル
+ * 音声プロファイル (Qwen3 CustomVoice用)
  */
 export interface VoiceProfile {
-  pitch: number;      // 音の高さ (0.5 ~ 2.0)
-  speed: number;      // 話す速度 (0.5 ~ 2.0)
-  volume: number;     // 音量 (0.0 ~ 1.0)
-  voiceId: string;    // Qwen3の音声ID
+  speaker: string;    // Qwen3スピーカー: "Vivian", "Serena", "Ryan" など
+  language: string;   // "Japanese", "English", "Auto"
+  instruct?: string;  // 音声命令（オプション）
+  pitch?: number;     // 音の高さ調整（オプション、将来用）
+  speed?: number;     // 話す速度調整（オプション、将来用）
 }
 
 /**
