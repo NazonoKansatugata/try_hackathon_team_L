@@ -20,7 +20,7 @@ export class BotManager {
   private isConversationActive: boolean = false;
   private conversationTurnCount: number = 0;
 
-  private readonly REPORT_THRESHOLD = 30; // レポート生成する会話数(いづれ消す)
+  private readonly REPORT_THRESHOLD = 5; // レポート生成する会話数(いづれ消す)
   private ollamaClient: OllamaClient;
   private conversationHistory: ConversationHistory;
   private themeContextSession: ThemeContextSession | null = null;
@@ -174,14 +174,13 @@ export class BotManager {
     // テキストメッセージを送信
     await bot.sendMessage(botConfig.channelId, content);
 
-    // 音声でも配信（TTS有効時）
+    // 音声でも配信（TTS有効時）- 並列実行（awaitなし）
     if (this.voiceManager && voiceChannelConfig.enabled) {
-      try {
-        await this.voiceManager.speak(content, characterType);
-      } catch (error) {
+      // 音声生成を待たずに次の処理へ進む
+      this.voiceManager.speak(content, characterType).catch((error) => {
         console.error('❌ 音声配信エラー:', error);
         // 音声配信の失敗はテキストメッセージの送信を妨げない
-      }
+      });
     }
   }
 
@@ -324,7 +323,7 @@ export class BotManager {
       if (this.conversationHistory.getCount() >= this.REPORT_THRESHOLD) {
         console.log(`\n📚 会話履歴が${this.REPORT_THRESHOLD}個に達しました。日報を生成します...\n`);
         
-        // レポート生成前にうさこから終了メッセージを送信
+        // レポート生成前にうさこから終了メッセージを送信（音声は並列実行）
         const closingMessage = '今日はここまで...';
         await this.sendMessage('usako', closingMessage);
         this.conversationHistory.addMessage('usako', closingMessage);
@@ -335,8 +334,12 @@ export class BotManager {
           this.themeContextSession = null;
         }
         
-        await this.generateDailyReports();
-        // レポート生成後、会話を停止
+        // レポート生成を非同期で実行（awaitなし）
+        this.generateDailyReports().catch((error) => {
+          console.error('❌ 日報生成エラー:', error);
+        });
+        
+        // レポート生成を待たずに会話を停止
         this.stopAutonomousConversation();
       }
       
