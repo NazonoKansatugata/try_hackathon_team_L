@@ -49,3 +49,16 @@ export interface Question {
   questionText: string;
   questionAnswer: string;
 }
+
+export interface WrongQuestions {
+  questionText: string;
+  userAnswer: string;
+  correctAnswer: string;
+}
+
+export interface ResultState {
+  percentage: number;
+  correctCount: number;
+  totalCount: number;
+  wrongQuestions?: WrongQuestions[];
+}

@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import type { ResultState } from '../../types';
 import './ResultPage.css';
 
 function ResultPage() {
   const location = useLocation();
-  const state = location.state as { percentage: number; correctCount: number; totalCount: number } | undefined;
+  const state = location.state as ResultState | undefined;
 
   // 80%以上なら管理者権限を付与
   useEffect(() => {
@@ -25,7 +26,7 @@ function ResultPage() {
     );
   }
 
-  const { percentage, correctCount, totalCount } = state;
+  const { percentage, correctCount, totalCount, wrongQuestions = [] } = state;
 
   return (
     <div className="result-page">
@@ -44,6 +45,24 @@ function ResultPage() {
           {percentage >= 40 && percentage < 60 && <p className="fair">まずまずですね。頑張ってうさこをもっと知ってみましょう。</p>}
           {percentage < 40 && <p className="needs-work">もっと頑張りましょう。あなたはまだうさこに関する知識が足りないようです。</p>}
         </div>
+
+        {wrongQuestions.length > 0 && (
+          <div className="wrong-answer-section">
+            <h3>間違えた問題</h3>
+            <div className="wrong-list">
+              {wrongQuestions.map((q, index) => (
+                <div key={index} className="wrong-item">
+                  <p className="wrong-q-text">Q. {q.questionText}</p>
+                  <div className="wrong-compare">
+                    <span className="user-choice">あなたの回答： {q.userAnswer === 'o' ? '◯' : '✕'}</span>
+                    <span className="correct-choice">正解： <b>{q.correctAnswer === 'o' ? '◯' : '✕'}</b></span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
 
       <div className="actions">
