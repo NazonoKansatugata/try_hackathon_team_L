@@ -106,7 +106,7 @@ export default function AdminPage() {
     if (loading) return <div className="p-8">読み込み中...</div>
 
     return (
-    <div className="admin-container" style={{ padding: "2rem", maxWidth: "1000px", margin: "0 auto" , backgroundColor: '#ffffff', color: "#333333", minHeight: "100vh"}}>
+    <div className="admin-container" style={{ padding: "2rem", maxWidth: "1000px", margin: "0 auto" , backgroundColor: 'var(--bg-primary)', color: "var(--text-primary)", minHeight: "100vh"}}>
       <h1>🔧 おしゃべりうさこ部 管理画面</h1>
 
       {/* --- 1. タブ切り替えボタン --- */}
@@ -136,7 +136,7 @@ export default function AdminPage() {
 
       {/* --- 2. 問題管理用フォーム (questionsタブのときだけ表示) --- */}
       {activeTab === "questions" && (
-        <div style={{ marginBottom: "2rem", background: "#f9f9f9", padding: "1.5rem", borderRadius: "8px", border: "1px solid #ddd" }}>
+        <div style={{ marginBottom: "2rem", background: "var(--bg-tertiary)", padding: "1.5rem", borderRadius: "8px", border: "1px solid var(--border-primary)" }}>
           <h3 style={{ marginTop: 0 }}>
             {editingId ? "✏️ 問題を編集" : "➕ 新しい問題を追加"}
           </h3>
@@ -217,8 +217,8 @@ export default function AdminPage() {
 
         {/* A. レポート一覧 */}
         {activeTab === "reports" && (
-          <table border={1} cellPadding={10} style={{ width: "100%", borderCollapse: "collapse", background: "white" }}>
-            <thead style={{ background: "#f0f0f0" }}>
+          <table border={1} cellPadding={10} style={{ width: "100%", borderCollapse: "collapse", background: "var(--bg-card)" }}>
+            <thead style={{ background: "var(--bg-tertiary)" }}>
               <tr>
                 <th>日付</th>
                 <th>キャラ</th>
@@ -251,7 +251,7 @@ export default function AdminPage() {
         {activeTab === "themes" && (
           <ul style={{ listStyle: "none", padding: 0 }}>
             {themes.map((theme) => (
-              <li key={theme.id} style={{ borderBottom: "1px solid #ccc", padding: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "white" }}>
+              <li key={theme.id} style={{ borderBottom: "1px solid var(--border-primary)", padding: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg-card)" }}>
                 <span>{theme.title}</span>
                 <button
                   onClick={() => handleDelete(theme.id, "theme")}
@@ -267,8 +267,8 @@ export default function AdminPage() {
 
         {/* C. 問題一覧 */}
         {activeTab === "questions" && (
-          <table border={1} cellPadding={10} style={{ width: "100%", borderCollapse: "collapse", background: "white" }}>
-            <thead style={{ background: "#e0f7fa" }}>
+          <table border={1} cellPadding={10} style={{ width: "100%", borderCollapse: "collapse", background: "var(--bg-card)" }}>
+            <thead style={{ background: "var(--bg-tertiary)" }}>
               <tr>
                 <th>問題文</th>
                 <th>正解</th>

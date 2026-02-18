@@ -24,26 +24,26 @@
   padding: 0.5rem 1.5rem;
   border-radius: 20px;
   text-decoration: none;
-  color: #555;
-  background: #eee;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
   transition: all 0.2s;
   font-weight: bold;
 }
 
 .char-tab.active {
   background: var(--accent-color);
-  color: white;
+  color: var(--text-inverse);
   transform: translateY(-2px);
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 /* 日記カードのデザイン変更 */
 .report-entry {
-  background: #fff;
-  border: none; /* 枠線を消す */
-  border-left: 6px solid var(--accent-color); /* 左にアクセントカラー */
+  background: var(--bg-card);
+  border: none;
+  border-left: 6px solid var(--accent-color);
   border-radius: 4px 12px 12px 4px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05); /* ふわっと浮く影 */
+  box-shadow: var(--shadow-sm);
   padding: 1.5rem;
   position: relative;
 }
@@ -53,13 +53,14 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
-  color: #888;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 
 .message-badge {
-  background: #f0f0f0;
+  background: var(--bg-tertiary);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 0.8rem;
+  color: var(--text-secondary);
 }

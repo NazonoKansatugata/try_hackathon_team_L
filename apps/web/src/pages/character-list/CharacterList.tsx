@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import DarkModeToggle from '../../components/DarkModeToggle';
+import './CharacterList.css';
 import type { Character } from '../../types';
 import { sampleCharacters } from '../../data/sampleData';
 import usakoDefault from '../../assets/usako.png';
@@ -66,6 +68,7 @@ function CharacterList() {
     <div className="character-list" data-theme={themeId}>
       <h1>キャラクター紹介</h1>
       <div className="nav-buttons-top">
+        <DarkModeToggle />
         {isAdmin && (
           <Link to="/admin" className="admin-panel-btn">
             <div className="admin-panel-content">
