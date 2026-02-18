@@ -137,8 +137,8 @@ function CharacterList() {
                 </div>
               </div>
 
-              <div className="tutorial-step" style={{ background: '#fffbeb', padding: '10px', borderRadius: '8px', border: '1px dashed #f59e0b' }}>
-                <div className="step-number" style={{ background: '#f59e0b' }}>?</div>
+              <div className="tutorial-step secret">
+                <div className="step-number">?</div>
                 <div className="step-text">
                   <h3>隠された「管理者権限」...</h3>
                   <p>「❓ 問題に答える」でクイズに挑戦しましょう。<br/>
