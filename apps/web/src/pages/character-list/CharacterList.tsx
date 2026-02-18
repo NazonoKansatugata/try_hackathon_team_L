@@ -62,7 +62,15 @@ function CharacterList() {
 
       {/* 上部ナビ */}
       <div className="nav-buttons-top">
-        <div className="nav-left-group">
+        <div className="nav-left-group" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem'}}>
+          <button 
+            type="button"
+            onClick={() => setShowTutorial(true)}
+            className="admin-panel-content"
+            style={{ fontFamily: 'inherit', cursor: 'pointer'}}
+            >
+              <span className="text">使い方</span>
+          </button>
           <DarkModeToggle />
         </div>
         <div className="nav-right-group">
@@ -92,57 +100,57 @@ function CharacterList() {
 
       {/* チュートリアル */}
       {showTutorial && (
-        <div
-          className="tutorial-overlay"
-          onClick={() => setShowTutorial(false)}
-        >
-          <div
-            className="tutorial-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-
-            <button
-              className="close-tutorial-btn"
-              onClick={() => setShowTutorial(false)}
-            >
+        <div className="tutorial-overlay" onClick={() => setShowTutorial(false)}>
+          <div className="tutorial-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="close-tutorial-btn" onClick={() => setShowTutorial(false)}>
               ｘ
             </button>
-
+            
             <div className="tutorial-content">
-
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
-                おしゃべりうさこ部の歩き方
-              </h2>
-
+              <h2>おしゃべりうさこ部の歩き方</h2>
+              
               <div className="tutorial-step">
                 <div className="step-number">1</div>
                 <div className="step-text">
-                  <h3>うさこ部のキャラを知ろう！</h3>
-                  <p>
-                    パネルからキャラを選択してプロフィールを確認できます。
-                  </p>
+                  <h3>うさこ部を知ろう！</h3>
+                  <p>右側（スマホは下）のパネルからキャラをタップ！<br/>
+                  性格や「好き・嫌い」をチェックしましょう。<br/>
+                  <small>※「けろこ」はボタンで人格が入れ替わります。</small></p>
                 </div>
               </div>
 
               <div className="tutorial-step">
                 <div className="step-number">2</div>
                 <div className="step-text">
-                  <h3>日誌を読もう！</h3>
-                  <p>
-                    「レポートを見る」から会話ログを確認できます。
-                  </p>
+                  <h3>日誌を読んでみよう！</h3>
+                  <p>「レポートを見る」ボタンを押すと、日々の会話ログが読めます。<br/>
+                  キャラごとの口調の違いを楽しんでください。</p>
+                </div>
+              </div>
+
+              <div className="tutorial-step">
+                <div className="step-number">3</div>
+                <div className="step-text">
+                  <h3>会話のテーマを提供しよう！！</h3>
+                  <p>上部の「✍️ テーマを追加」から、みんなに話してほしい話題を投稿できます。<br/>
+                  あなたの投稿したテーマで会話が弾むかも？</p>
+                </div>
+              </div>
+
+              <div className="tutorial-step" style={{ background: '#fffbeb', padding: '10px', borderRadius: '8px', border: '1px dashed #f59e0b' }}>
+                <div className="step-number" style={{ background: '#f59e0b' }}>?</div>
+                <div className="step-text">
+                  <h3>隠された「管理者権限」...</h3>
+                  <p>「❓ 問題に答える」でクイズに挑戦しましょう。<br/>
+                  <strong>正解率80%以上</strong>を叩き出すと、秘密の「⚙️ 管理画面」への入り口が開放されます！</p>
                 </div>
               </div>
 
               <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-                <button
-                  className="primary"
-                  onClick={() => setShowTutorial(false)}
-                >
+                <button className="primary" onClick={() => setShowTutorial(false)}>
                   わかった！
                 </button>
               </div>
-
             </div>
           </div>
         </div>
