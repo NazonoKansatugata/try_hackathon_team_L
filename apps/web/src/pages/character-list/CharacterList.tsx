@@ -1,46 +1,43 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import DarkModeToggle from '../../components/DarkModeToggle';
+import './CharacterList.css';
+
 import type { Character } from '../../types';
 import { sampleCharacters } from '../../data/sampleData';
+
 import usakoDefault from '../../assets/usako.png';
 import nekokoDefault from '../../assets/nekoko.png';
 import kerokoDefault from '../../assets/keroko.png';
+
 import usakoIcon from '../../assets/usako-2.png';
 import nekokoIcon from '../../assets/nekoko-2.png';
 import kerokoIcon from '../../assets/keroko-2.png';
-import './CharacterList.css';
 
 /**
  * キャラクター紹介画面
- * 
- * TODO: 初心者向けタスク
- * 1. キャラクターのデータを定義する（名前、説明、画像など）
- * 2. キャラクターのリストを表示する
- * 3. 各キャラクターをクリックすると、そのキャラクターのレポート画面に遷移する
- * 
- * 参考：discord-botのキャラクター
- * - うさこ: 主人公・ミステリアス担当。無口気味で短文が多い。
- * - ねここ: ムードメーカー。元気で活発。場を盛り上げるのが得意。
- * - けろこ: 性格切り替え可能。人格Aはおどおど、人格Bはツンツン。
  */
 function CharacterList() {
-  // サンプルキャラクターを利用
-  // サンプルキャラクターを個別に取得
+
+  // キャラクター取得
   const usako = sampleCharacters.find(c => c.id === 'usako');
   const nekoko = sampleCharacters.find(c => c.id === 'nekoko');
   const keroko = sampleCharacters.find(c => c.id === 'keroko');
 
-  // 環境変数から画像パスを読み取り（無ければデフォルト画像を使用）
+  // 環境変数から画像取得
   const { VITE_USAKO_IMAGE, VITE_NEKOKO_IMAGE, VITE_KEROKO_IMAGE } = import.meta.env;
+
   const usakoImg = VITE_USAKO_IMAGE ?? usakoDefault;
   const nekokoImg = VITE_NEKOKO_IMAGE ?? nekokoDefault;
   const kerokoImg = VITE_KEROKO_IMAGE ?? kerokoDefault;
+
   const imageMap: Record<string, string> = {
     usako: usakoImg,
     nekoko: nekokoImg,
     keroko: kerokoImg,
   };
 
+  // state
   const [selected, setSelected] = useState<Character | null>(usako ?? null);
   const [kerokoMode, setKerokoMode] = useState<'A' | 'B'>('A');
   const [isAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
@@ -60,116 +57,107 @@ function CharacterList() {
 
   return (
     <div className="character-list" data-theme={themeId}>
+
       <h1>キャラクター紹介</h1>
+
+      {/* 上部ナビ */}
       <div className="nav-buttons-top">
-      <button
-        className="tutorial-trigger-btn question-panel-btn"
-        onClick={() => setShowTutorial(true)}>
-          <div className="question-panel-content">
-            <span className="text">使い方</span>
-          </div>
-        </button>
-      <div className="nav-right-group">
-        {isAdmin && (
-          <Link to="/admin" className="admin-panel-btn">
-            <div className="admin-panel-content">
-              <span className="icon">⚙️</span>
-              <span className="text">管理画面へ</span>
+        <div className="nav-left-group">
+          <DarkModeToggle />
+        </div>
+        <div className="nav-right-group">
+          {isAdmin && (
+            <Link to="/admin" className="admin-panel-btn">
+              <div className="admin-panel-content">
+                <span className="icon">⚙️</span>
+                <span className="text">管理画面へ</span>
+              </div>
+            </Link>
+          )}
+          <Link to="/add-theme" className="question-panel-btn">
+            <div className="question-panel-content">
+              <span className="icon">✍️</span>
+              <span className="text">テーマを追加</span>
             </div>
           </Link>
-        )}
-        <Link to="/add-theme" className="question-panel-btn">
-          <div className="question-panel-content">
-            <span className="icon">✍️</span>
-            <span className="text">テーマを追加</span>
-          </div>
-        </Link>
-        <Link to="/question" className="question-panel-btn">
-          <div className="question-panel-content">
-            <span className="icon">❓</span>
-            <span className="text">問題に答える</span>
-          </div>
-        </Link>
+          <Link to="/question" className="question-panel-btn">
+            <div className="question-panel-content">
+              <span className="icon">❓</span>
+              <span className="text">問題に答える</span>
+            </div>
+          </Link>
+        </div>
       </div>
-    </div>
 
+
+      {/* チュートリアル */}
       {showTutorial && (
-        <div className="tutorial-overlay" onClick={() => setShowTutorial(false)}>
-          <div className="tutorial-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="close-tutorial-btn" onClick={() => setShowTutorial(false)}>
+        <div
+          className="tutorial-overlay"
+          onClick={() => setShowTutorial(false)}
+        >
+          <div
+            className="tutorial-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+
+            <button
+              className="close-tutorial-btn"
+              onClick={() => setShowTutorial(false)}
+            >
               ｘ
             </button>
+
             <div className="tutorial-content">
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>おしゃべりうさこ部の歩き方</h2>
-              
-              {/* ステップ1: キャラクター */}
+
+              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
+                おしゃべりうさこ部の歩き方
+              </h2>
+
               <div className="tutorial-step">
                 <div className="step-number">1</div>
                 <div className="step-text">
                   <h3>うさこ部のキャラを知ろう！</h3>
                   <p>
-                    右側（スマホは下）のパネルからキャラをタップ！<br/>
-                    性格や「好き・嫌い」をチェックしましょう。<br/>
-                    <small style={{ color: '#888' }}>※「けろこ」はボタンで人格が入れ替わります。</small>
+                    パネルからキャラを選択してプロフィールを確認できます。
                   </p>
                 </div>
               </div>
 
-              {/* ステップ2: レポート */}
               <div className="tutorial-step">
                 <div className="step-number">2</div>
                 <div className="step-text">
-                  <h3>日誌を読んでみよう！</h3>
+                  <h3>日誌を読もう！</h3>
                   <p>
-                    「レポートを見る」ボタンを押すと、日々の会話ログが読めます。<br/>
-                    キャラごとの口調の違いを楽しんでください。
-                  </p>
-                </div>
-              </div>
-
-              {/* ステップ3: テーマ投稿 */}
-              <div className="tutorial-step">
-                <div className="step-number">3</div>
-                <div className="step-text">
-                  <h3>会話のテーマを提供しよう！</h3>
-                  <p>
-                    上部の「✍️ テーマを追加」から、みんなに話してほしい話題を投稿できます。
-                    あなたの投稿したテーマで会話が弾むかも？
-                  </p>
-                </div>
-              </div>
-
-              {/* ステップ4: 隠し要素（特別デザイン） */}
-              <div className="tutorial-step" style={{ 
-                background: '#fffbeb', 
-                padding: '12px', 
-                borderRadius: '8px', 
-                border: '2px dashed #f59e0b',
-                marginTop: '1rem'
-              }}>
-                <div className="step-number" style={{ background: '#f59e0b' }}>?</div>
-                <div className="step-text">
-                  <h3 style={{ color: '#d97706' }}>隠された「管理者権限」...</h3>
-                  <p style={{ color: '#92400e' }}>
-                    「❓ 問題に答える」でクイズに挑戦しましょう。<br/>
-                    <strong>正解率80%以上</strong>を叩き出すと、秘密の「⚙️ 管理画面」への入り口が開放されます！
+                    「レポートを見る」から会話ログを確認できます。
                   </p>
                 </div>
               </div>
 
               <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-                <button className="primary" onClick={() => setShowTutorial(false)}>
+                <button
+                  className="primary"
+                  onClick={() => setShowTutorial(false)}
+                >
                   わかった！
                 </button>
               </div>
+
             </div>
           </div>
         </div>
       )}
+
+
+      {/* メイン */}
       <div className="character-container">
+
         <div className="main">
+
           <div className="character-preview">
+
             {selected ? (
+
               <div className="preview-inner">
                 <div className="preview-avatar-wrap">
                   <span className="avatar-orbit" aria-hidden="true" />
@@ -246,12 +234,21 @@ function CharacterList() {
                   </Link>
                 </div>
               </div>
+
             ) : (
-              <p className="placeholder">右側のタッチパネルからキャラクターを選択してください</p>
+
+              <p className="placeholder">
+                キャラクターを選択してください
+              </p>
+
             )}
+
           </div>
+
         </div>
 
+
+        {/* サイドバー */}
         <aside className="character-sidebar" aria-label="キャラクター選択パネル">
           {usako && (
             <div
@@ -298,7 +295,9 @@ function CharacterList() {
             </div>
           )} 
         </aside>
+
       </div>
+
     </div>
   );
 }

@@ -9,39 +9,36 @@
   --surface-soft: #f7f5f1;
   --line: rgba(31, 42, 68, 0.12);
 
-  /* アプリ共通の背景 */
   background: radial-gradient(circle at 10% 10%, rgba(255, 220, 150, 0.35), transparent 45%),
     radial-gradient(circle at 90% 20%, rgba(162, 228, 241, 0.35), transparent 40%),
     linear-gradient(140deg, #fffaf0 0%, #f3f0e8 40%, #f8f5ef 100%);
 
   min-height: 100vh;
   width: 100%;
-  padding: 2.5rem; /* 他のページと同じ余白 */
+  padding: 2.5rem;
   box-sizing: border-box;
   font-family: 'Zen Kaku Gothic New', sans-serif;
   color: var(--ink);
 }
 
-/* --- コンテンツ部分（カードの見た目を削除） --- */
+/* --- コンテンツ部分 --- */
 .theme-form-wrapper {
-  /* ✨ ボックス（カード）の見た目を削除して透明に */
+
   background: transparent;
   box-shadow: none;
   border: none;
   border-radius: 0;
   padding: 0;
-  backdrop-filter: none;
 
-  /* 画面全体を使うが、文字が読みやすいように最大幅だけ制限 */
-  /* ※もし「入力欄も画面端まで完全に伸ばしたい」場合は max-width を削除してください */
   width: 100%;
-  max-width: 800px; 
-  margin: 0 auto; /* 左右中央には配置 */
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-/* タイトル周り */
+/* --- タイトル --- */
 .theme-form-wrapper h1 {
-  text-align: left; /* 左寄せに変更（お好みで center でもOK） */
+
+  text-align: left;
   margin-bottom: 0.5rem;
   font-family: 'Shippori Mincho B1', serif;
   font-size: clamp(2rem, 4vw, 2.5rem);
@@ -50,14 +47,16 @@
 }
 
 .subtitle {
-  text-align: left; /* 左寄せに変更 */
+
+  text-align: left;
   color: #3e4a61;
   margin-bottom: 3rem;
   font-size: 1rem;
 }
 
-/* --- メッセージ系 --- */
+/* --- メッセージ --- */
 .error-message {
+
   background-color: #fff2f0;
   border: 1px solid #ffccc7;
   color: #ff4d4f;
@@ -67,6 +66,7 @@
 }
 
 .success-message {
+
   background-color: #f6ffed;
   border: 1px solid #b7eb8f;
   color: #52c41a;
@@ -75,20 +75,23 @@
   margin-bottom: 2rem;
 }
 
-/* --- フォームレイアウト --- */
+/* --- フォーム --- */
 .theme-form {
+
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
 .form-group {
+
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
 .form-group label {
+
   color: var(--ink);
   font-weight: 700;
   font-size: 1.1rem;
@@ -97,18 +100,20 @@
 .form-group input,
 .form-group textarea,
 .form-group select {
+
   padding: 1rem;
   border: 2px solid var(--line);
   border-radius: 12px;
   font-size: 1rem;
   font-family: inherit;
-  background-color: rgba(255, 255, 255, 0.6); /* 背景に少し白を乗せる */
+  background-color: rgba(255, 255, 255, 0.6);
   transition: all 0.2s ease;
 }
 
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
+
   outline: none;
   border-color: var(--accent);
   background-color: #fff;
@@ -116,13 +121,15 @@
 }
 
 .form-group small {
+
   color: #666;
   font-size: 0.85rem;
   margin-top: 0.2rem;
 }
 
-/* --- ボタンエリア --- */
+/* --- ボタン --- */
 .form-actions {
+
   display: flex;
   gap: 1.5rem;
   margin-top: 2rem;
@@ -130,9 +137,10 @@
 
 .btn-submit,
 .btn-cancel {
+
   padding: 1rem 2rem;
   border: none;
-  border-radius: 50px; /* 丸いボタンに */
+  border-radius: 50px;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
@@ -141,17 +149,20 @@
 }
 
 .btn-submit {
+
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #fff;
   box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .btn-submit:hover:not(:disabled) {
+
   transform: translateY(-2px);
   box-shadow: 0 8px 20px var(--accent-glow);
 }
 
 .btn-submit:disabled {
+
   opacity: 0.6;
   cursor: not-allowed;
   background: #ccc;
@@ -159,27 +170,31 @@
 }
 
 .btn-cancel {
+
   background-color: transparent;
   color: #3e4a61;
   border: 2px solid var(--line);
 }
 
 .btn-cancel:hover {
+
   background-color: rgba(31, 42, 68, 0.05);
   color: var(--ink);
 }
 
-/* スマホ対応 */
+/* --- スマホ対応 --- */
 @media (max-width: 600px) {
+
   .theme-form-container {
     padding: 1.5rem;
   }
-  
+
   .form-actions {
     flex-direction: column-reverse;
   }
-  
-  .btn-submit, .btn-cancel {
+
+  .btn-submit,
+  .btn-cancel {
     width: 100%;
   }
 }

@@ -7,16 +7,16 @@
 
 .result-page h1 {
   font-size: 2.2rem;
-  color: #112233;
+  color: var(--text-primary);
   margin-bottom: 2rem;
 }
 
 .result-card {
-  background: linear-gradient(180deg, #ffffff, #fbfcff);
-  border: 1px solid #e6eefc;
+  background: var(--gradient-surface);
+  border: 1px solid var(--border-secondary);
   padding: 2.5rem 2rem;
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(2,6,23,0.06);
+  box-shadow: var(--shadow-md);
   margin-bottom: 2rem;
 }
 
@@ -31,13 +31,13 @@
 .percentage {
   font-size: 3.5rem;
   font-weight: 800;
-  color: #3b8ee6;
+  color: var(--accent-primary);
   line-height: 1;
 }
 
 .correct-info {
   font-size: 1.1rem;
-  color: #34495e;
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
@@ -95,29 +95,29 @@
 }
 
 .retry-btn {
-  background: linear-gradient(180deg, #5aa6ff, #3b8ee6);
-  color: white;
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
 }
 
 .retry-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(58,142,230,0.3);
+  box-shadow: 0 8px 20px var(--accent-glow);
 }
 
 .home-btn {
-  background: #fff;
-  border: 1px solid #dbe9ff;
-  color: #34495e;
+  background: var(--bg-card);
+  border: 1px solid var(--border-tertiary);
+  color: var(--text-secondary);
 }
 
 .home-btn:hover {
-  background: #f0f4f9;
+  background: var(--bg-tertiary);
 }
 
 .back-btn {
   padding: 0.7rem 1.5rem;
-  background: linear-gradient(180deg, #5aa6ff, #3b8ee6);
-  color: white;
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   font-weight: 600;
@@ -125,7 +125,7 @@
 }
 
 .error {
-  color: #c0392b;
+  color: #e74c3c;
   font-size: 1.05rem;
 }
 
