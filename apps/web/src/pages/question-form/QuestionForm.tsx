@@ -82,9 +82,18 @@ function QuestionForm() {
     // 正答数を計算
     const correctCount = problems.filter((p, i) => answers[i] === p.questionAnswer).length;
     const percentage = Math.round((correctCount / problems.length) * 100);
+
+    const wrongQuestions = problems
+      .map((p, i) => ({
+        questionText: p.questionText,
+        userAnswer: answers[i],
+        correctAnswer: p.questionAnswer,
+        isCorrect: answers[i] === p.questionAnswer,
+      }))
+      .filter((item) => !item.isCorrect);
     
     // 結果画面へ遷移
-    navigate('/result', { state: { percentage, correctCount, totalCount: problems.length } });
+    navigate('/result', { state: { percentage, correctCount, totalCount: problems.length, wrongQuestions } });
   };
 
   if (loading) {
