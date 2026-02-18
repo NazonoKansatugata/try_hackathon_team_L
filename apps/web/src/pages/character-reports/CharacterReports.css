@@ -1,28 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;600;700&display=swap');
 
 .character-reports {
-  --ink: #1f2a44;
-  --ink-soft: #3e4a61;
-  --accent: #f39c12;
-  --accent-2: #f6b23f;
-  --accent-ink: #8a4a0f;
-  --accent-soft: rgba(243, 156, 18, 0.18);
-  --accent-border: rgba(243, 156, 18, 0.3);
-  --accent-glow: rgba(243, 156, 18, 0.35);
-  --accent-tint: #fff6e6;
-  --surface: #ffffff;
-  --surface-soft: #f7f5f1;
-  --line: rgba(31, 42, 68, 0.12);
+  --ink: var(--text-primary);
+  --ink-soft: var(--text-secondary);
+  --accent: var(--accent-primary);
+  --accent-2: var(--accent-secondary);
+  --accent-ink: var(--text-inverse);
+  --accent-soft: var(--accent-glow);
+  --accent-border: var(--border-focus);
+  --accent-glow: var(--accent-glow);
+  --accent-tint: var(--bg-tertiary);
+  --surface: var(--bg-card);
+  --surface-soft: var(--bg-surface);
+  --line: var(--border-primary);
 
   padding: 2.5rem 2.5rem 3rem;
   min-height: 100vh;
   width: 100%;
   box-sizing: border-box;
 
-  background:
-    radial-gradient(circle at 10% 10%, rgba(255, 220, 150, 0.35), transparent 45%),
-    radial-gradient(circle at 90% 20%, rgba(162, 228, 241, 0.35), transparent 40%),
-    linear-gradient(140deg, #fffaf0 0%, #f3f0e8 40%, #f8f5ef 100%);
+  background: var(--gradient-bg);
 
   font-family: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
   color: var(--ink);
@@ -88,7 +85,7 @@
 
 .subtitle {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--text-primary);
 }
 
 .top-actions {
@@ -138,11 +135,11 @@
 }
 
 .char-tab.active {
-  background: var(--accent-tint);
+  background: var(--bg-tertiary);
   border-color: var(--accent-border);
   color: var(--accent-ink);
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px var(--accent-glow);
+  box-shadow: 0 6px 16px var(--accent-glow);
 }
 
 .tab-icon {
