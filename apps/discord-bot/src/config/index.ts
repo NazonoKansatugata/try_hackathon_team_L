@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { CharacterConfig, BotConfig, OllamaConfig, KerokoPersonality } from '../types/index.js';
+import { CharacterConfig, BotConfig, OllamaConfig, KerokoPersonality, TTSConfig, VoiceChannelConfig } from '../types/index.js';
 
 config();
 
@@ -67,6 +67,7 @@ export const botConfig: BotConfig = {
   autoConversationEndHour: parseInt(process.env.AUTO_CONVERSATION_END_HOUR || '18'),
   messageIntervalMin: parseInt(process.env.MESSAGE_INTERVAL_MIN || '30'),
   messageIntervalMax: parseInt(process.env.MESSAGE_INTERVAL_MAX || '120'),
+  reportThreshold: parseInt(process.env.REPORT_THRESHOLD || '20'),
   kerokoPersonality: (process.env.KEROKO_PERSONALITY || 'A') as KerokoPersonality,
 };
 
@@ -80,4 +81,20 @@ export const ollamaConfig: OllamaConfig = {
   topP: parseFloat(process.env.OLLAMA_TOP_P || '0.9'),
   repeatPenalty: parseFloat(process.env.OLLAMA_REPEAT_PENALTY || '1.1'),
   maxTokens: parseInt(process.env.OLLAMA_MAX_TOKENS || '150'),
+};
+
+/**
+ * TTS設定
+ */
+export const ttsConfig: TTSConfig = {
+  apiUrl: process.env.TTS_API_URL || 'http://localhost:11434',
+  enabled: process.env.TTS_ENABLED === 'true',
+};
+
+/**
+ * 音声チャンネル設定
+ */
+export const voiceChannelConfig: VoiceChannelConfig = {
+  channelId: process.env.VOICE_CHANNEL_ID || '',
+  enabled: process.env.VOICE_CHANNEL_ENABLED === 'true',
 };

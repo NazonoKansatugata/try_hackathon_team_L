@@ -1,4 +1,5 @@
 import { BotManager } from './bots/BotManager.js';
+import cron from 'node-cron';
 
 /**
  * メイン処理
@@ -27,25 +28,55 @@ async function main() {
     // Bot初期化
     await manager.initialize();
 
-    // 自律会話を開始（テーマはFirestoreから自動取得）
-    console.log('\n🤖 5秒後に自律会話を開始します...');
-    await sleep(5000);
-    
-    // テーマを自動取得して会話開始
-    await manager.startAutonomousConversation();
+    // 起動時に会話を開始
+    console.log('\n🤖 起動後すぐに自律会話を開始します...');
+    try {
+      await manager.startAutonomousConversation();
+    } catch (error) {
+      console.error('❌ 自律会話の開始中にエラーが発生しました:', error);
+    }
 
-    console.log('\n✅ 自律会話が終了しました');
+    // 毎日10時に会話を開始するスケジュール
+    cron.schedule('0 10 * * *', async () => {
+      console.log('\n⏰ 朝10時になりました。自律会話を開始します...');
+      if (!manager.isConversationRunning()) {
+        try {
+          await manager.startAutonomousConversation();
+        } catch (error) {
+          console.error('❌ 自律会話の開始中にエラーが発生しました:', error);
+        }
+      } else {
+        console.log('⚠️ 会話は既に進行中です');
+      }
+    }, {
+      timezone: 'Asia/Tokyo'
+    });
+
+    // 毎日18時に会話を終了してレポートを生成するスケジュール
+    cron.schedule('0 18 * * *', async () => {
+      console.log('\n⏰ 18時になりました。会話を終了してレポートを生成します...');
+      try {
+        await manager.endConversationAndGenerateReport();
+      } catch (error) {
+        console.error('❌ レポート生成中にエラーが発生しました:', error);
+      }
+    }, {
+      timezone: 'Asia/Tokyo'
+    });
+
+    console.log('\n✅ スケジューリングを設定しました');
+    console.log('   📅 毎日10時: 会話開始');
+    console.log('   📅 毎日18時: 会話終了・レポート生成');
     console.log('💡 Ctrl+C で終了できます\n');
+
+    // プログラムを終了させずに実行し続ける
+    await new Promise(() => {});
 
   } catch (error) {
     console.error('❌ エラーが発生しました:', error);
     await manager.shutdown();
     process.exit(1);
   }
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // 実行

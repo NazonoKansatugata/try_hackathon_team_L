@@ -104,6 +104,33 @@ const CHARACTER_PROMPTS = {
  */
 export class PromptBuilder {
   /**
+   * 複数キャラクターの会話をまとめて生成するプロンプトを構築
+   */
+  static buildBatchConversationPrompt(
+    conversationHistory: ConversationMessage[],
+    kerokoPersonality: KerokoPersonality = 'A',
+    batchSize: number = 10,
+    theme?: string
+  ): string {
+    const themeText = theme ? `\n【会話のテーマ】\n${theme}\n` : '';
+    const historyText = this.formatHistory(conversationHistory, 'usako');
+
+    const systemPrompt = `【キャラクター設定】\n\n` +
+      `### うさこ\n${CHARACTER_PROMPTS.usako}\n\n` +
+      `### ねここ\n${CHARACTER_PROMPTS.nekoko}\n\n` +
+      `### けろこ\n${CHARACTER_PROMPTS.keroko[kerokoPersonality]}\n`;
+
+    const instructions = `【指示】\n` +
+      `以下の会話履歴を踏まえて、次の発言を${batchSize}件まとめて生成してください。\n` +
+      `各行は必ず「usako: 〜」「nekoko: 〜」「keroko: 〜」の形式で出力してください。\n` +
+      `説明や注釈は不要です。\n` +
+      `自然な会話の流れを保ち、同じキャラクターの連続は最大2回までにしてください。\n` +
+      `鍵括弧（「」）は使用しないでください。`;
+
+    return `${systemPrompt}\n${themeText}` +
+      `【これまでの会話】\n${historyText}\n\n${instructions}`;
+  }
+  /**
    * キャラクターの発言を生成するプロンプトを構築
    */
   static buildConversationPrompt(

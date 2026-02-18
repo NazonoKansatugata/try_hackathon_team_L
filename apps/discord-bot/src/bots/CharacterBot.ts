@@ -1,5 +1,7 @@
-import { Client, GatewayIntentBits, Message, TextChannel } from 'discord.js';
-import { CharacterConfig } from '../types/index.js';
+import { Client, GatewayIntentBits, Message, TextChannel, VoiceChannel } from 'discord.js';
+import { CharacterConfig, CharacterType } from '../types/index.js';
+import { VoiceManager } from '../tts/voiceManager.js';
+import { ttsConfig } from '../config/index.js';
 
 /**
  * キャラクターBot基底クラス
@@ -9,6 +11,7 @@ export class CharacterBot {
   private config: CharacterConfig;
   private isReady: boolean = false;
   private onHumanMessage?: (username: string, content: string, channelId: string) => void;
+  private voiceManager: VoiceManager | null = null;
 
   constructor(config: CharacterConfig) {
     this.config = config;
@@ -17,10 +20,16 @@ export class CharacterBot {
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildVoiceStates,
       ],
     });
 
     this.setupEventHandlers();
+
+    // TTS機能が有効な場合のみVoiceManagerを初期化
+    if (ttsConfig.enabled) {
+      this.voiceManager = new VoiceManager();
+    }
   }
 
   /**
@@ -116,6 +125,13 @@ export class CharacterBot {
   }
 
   /**
+   * クライアント取得
+   */
+  getClient(): Client {
+    return this.client;
+  }
+
+  /**
    * 準備完了チェック
    */
   isClientReady(): boolean {
@@ -123,10 +139,59 @@ export class CharacterBot {
   }
 
   /**
+   * 音声チャンネルに接続
+   */
+  async connectToVoiceChannel(guildId: string, channelId: string): Promise<void> {
+    if (!this.voiceManager) {
+      return;
+    }
+
+    try {
+      console.log(`🔊 [${this.config.displayName}] 音声チャンネルに接続中...`);
+
+      const guild = await this.client.guilds.fetch(guildId);
+      const voiceChannel = await guild.channels.fetch(channelId);
+
+      if (!voiceChannel || !voiceChannel.isVoiceBased()) {
+        throw new Error('音声チャンネルが見つかりません');
+      }
+
+      await this.voiceManager.connect(voiceChannel as any, this.client);
+      console.log(`✅ [${this.config.displayName}] 音声チャンネル接続完了`);
+    } catch (error) {
+      console.error(`❌ [${this.config.displayName}] 音声チャンネル接続エラー:`, error);
+      console.warn(`⚠️ [${this.config.displayName}] 音声配信機能は無効化されます`);
+    }
+  }
+
+  /**
+   * 音声で読み上げ（TTS）
+   * @param content 読み上げるテキスト
+   * @param characterType 発話するキャラクタータイプ（指定がない場合は自分のタイプ）
+   */
+  async speak(content: string, characterType?: CharacterType): Promise<void> {
+    if (!this.voiceManager) {
+      return;
+    }
+
+    try {
+      await this.voiceManager.speak(content, characterType || this.config.type);
+    } catch (error) {
+      console.error(`❌ [${this.config.displayName}] 音声配信エラー:`, error);
+    }
+  }
+
+  /**
    * Bot停止
    */
   async shutdown(): Promise<void> {
     console.log(`🛑 ${this.config.displayName} をシャットダウンします`);
+    
+    // 音声接続を切断
+    if (this.voiceManager) {
+      this.voiceManager.disconnect();
+    }
+    
     await this.client.destroy();
     this.isReady = false;
   }

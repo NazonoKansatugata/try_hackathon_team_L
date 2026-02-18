@@ -52,6 +52,7 @@ export interface BotConfig {
   autoConversationEndHour: number;
   messageIntervalMin: number;
   messageIntervalMax: number;
+  reportThreshold: number;
   kerokoPersonality: KerokoPersonality;
 }
 
@@ -104,4 +105,41 @@ export interface DailyReport {
   content: string;
   timestamp: Date;
   messageCount: number;
+}
+
+/**
+ * Qwen3-TTS設定
+ */
+export interface Qwen3TTSConfig {
+  modelName: string;  // "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
+  deviceMap: string;  // "cuda:0" or "cpu"
+  dtype: string;      // "torch.bfloat16" or "torch.float16"
+  enabled: boolean;
+}
+
+/**
+ * 音声プロファイル (Qwen3 CustomVoice用)
+ */
+export interface VoiceProfile {
+  speaker: string;    // Qwen3スピーカー: "Vivian", "Serena", "Ryan" など
+  language: string;   // "Japanese", "English", "Auto"
+  instruct?: string;  // 音声命令（オプション）
+  pitch?: number;     // 音の高さ調整（オプション、将来用）
+  speed?: number;     // 話す速度調整（オプション、将来用）
+}
+
+/**
+ * TTS リクエスト
+ */
+export interface TTSRequest {
+  text: string;
+  voiceProfile: VoiceProfile;
+}
+
+/**
+ * 音声チャンネル設定
+ */
+export interface VoiceChannelConfig {
+  channelId: string;
+  enabled: boolean;
 }
