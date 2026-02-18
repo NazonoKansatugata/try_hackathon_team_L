@@ -22,7 +22,13 @@ export class VoiceManager {
   private connection: VoiceConnection | null = null;
   private audioPlayer: AudioPlayer;
   private isPlaying: boolean = false;
-  private audioQueue: Array<{ text: string; profile: VoiceProfile }> = [];
+  private ttsInFlight: number = 0;
+  private ttsWaitQueue: Array<() => void> = [];
+  private audioQueue: Array<{
+    text: string;
+    profile: VoiceProfile;
+    streamPromise?: Promise<Readable>;
+  }> = [];
 
   // キャラクターごとの音声プロファイル（Qwen3-TTS CustomVoice対応）
   private readonly voiceProfiles: Record<CharacterType, VoiceProfile> = {
@@ -171,6 +177,33 @@ export class VoiceManager {
   }
 
   /**
+   * TTSを先行生成（Bot送信前に開始）
+   */
+  prepareSpeech(text: string, characterType: CharacterType): Promise<Readable> {
+    const profile = this.voiceProfiles[characterType];
+    return this.withTtsSlot(() => this.ttsClient.textToSpeech(text, profile));
+  }
+
+  /**
+   * 先行生成済みの音声をキューに追加
+   */
+  async speakWithPrepared(
+    text: string,
+    characterType: CharacterType,
+    streamPromise: Promise<Readable>
+  ): Promise<void> {
+    const profile = this.voiceProfiles[characterType];
+
+    console.log(`🎤 [${characterType}] 音声キューに追加(先行生成): "${text}"`);
+
+    this.audioQueue.push({ text, profile, streamPromise });
+
+    if (!this.isPlaying) {
+      await this.processQueue();
+    }
+  }
+
+  /**
    * キューを処理して音声を順次再生
    */
   private async processQueue(): Promise<void> {
@@ -194,8 +227,16 @@ export class VoiceManager {
       ) as CharacterType | undefined;
       const volume = characterType ? this.volumeProfiles[characterType] : 0.8;
 
-      // TTSで音声生成
-      const audioStream = await this.ttsClient.textToSpeech(item.text, item.profile);
+      // 先行生成があればそれを使用、なければTTS生成
+      let audioStream: Readable;
+      try {
+        audioStream = item.streamPromise
+          ? await item.streamPromise
+          : await this.withTtsSlot(() => this.ttsClient.textToSpeech(item.text, item.profile));
+      } catch (error) {
+        console.error('⚠️ TTS生成に失敗したため無音を再生します:', error);
+        audioStream = await this.ttsClient.generateSilence(800);
+      }
       
       // オーディオリソース作成
       const resource = createAudioResource(audioStream, {
@@ -214,6 +255,28 @@ export class VoiceManager {
       
       // エラーが発生しても次のキューを処理
       await this.processQueue();
+    }
+  }
+
+  /**
+   * TTS同時実行数を制限
+   */
+  private async withTtsSlot<T>(fn: () => Promise<T>): Promise<T> {
+    if (this.ttsInFlight >= 2) {
+      await new Promise<void>((resolve) => {
+        this.ttsWaitQueue.push(resolve);
+      });
+    }
+
+    this.ttsInFlight += 1;
+    try {
+      return await fn();
+    } finally {
+      this.ttsInFlight -= 1;
+      const next = this.ttsWaitQueue.shift();
+      if (next) {
+        next();
+      }
     }
   }
 

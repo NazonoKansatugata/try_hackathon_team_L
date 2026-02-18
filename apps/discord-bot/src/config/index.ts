@@ -67,6 +67,7 @@ export const botConfig: BotConfig = {
   autoConversationEndHour: parseInt(process.env.AUTO_CONVERSATION_END_HOUR || '18'),
   messageIntervalMin: parseInt(process.env.MESSAGE_INTERVAL_MIN || '30'),
   messageIntervalMax: parseInt(process.env.MESSAGE_INTERVAL_MAX || '120'),
+  reportThreshold: parseInt(process.env.REPORT_THRESHOLD || '20'),
   kerokoPersonality: (process.env.KEROKO_PERSONALITY || 'A') as KerokoPersonality,
 };
 

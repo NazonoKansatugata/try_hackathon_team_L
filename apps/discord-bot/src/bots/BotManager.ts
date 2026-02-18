@@ -1,6 +1,6 @@
 import { CharacterBot } from './CharacterBot.js';
 import { characters, botConfig, ttsConfig, voiceChannelConfig } from '../config/index.js';
-import { CharacterType, DailyReport } from '../types/index.js';
+import { CharacterType, ConversationMessage, DailyReport } from '../types/index.js';
 import { OllamaClient } from '../ollama/client.js';
 import { PromptBuilder } from '../llm/promptBuilder.js';
 import { ConversationHistory } from '../conversation/history.js';
@@ -19,8 +19,11 @@ export class BotManager {
   private isRunning: boolean = false;
   private isConversationActive: boolean = false;
   private conversationTurnCount: number = 0;
+  private batchQueue: Array<{ characterType: CharacterType; content: string }> = [];
 
-  private readonly REPORT_THRESHOLD = 5; // レポート生成する会話数(いづれ消す)
+  private readonly BATCH_SIZE = 10;
+  private readonly BATCH_INTERVAL_MS = 5 * 60 * 1000;
+  private readonly BATCH_LOW_WATERMARK = 3;
   private ollamaClient: OllamaClient;
   private conversationHistory: ConversationHistory;
   private themeContextSession: ThemeContextSession | null = null;
@@ -171,13 +174,22 @@ export class BotManager {
       return;
     }
 
+    // 送信前にTTSを先行生成
+    const ttsPromise = this.voiceManager && voiceChannelConfig.enabled
+      ? this.voiceManager.prepareSpeech(content, characterType)
+      : null;
+
     // テキストメッセージを送信
     await bot.sendMessage(botConfig.channelId, content);
 
     // 音声でも配信（TTS有効時）- 並列実行（awaitなし）
     if (this.voiceManager && voiceChannelConfig.enabled) {
-      // 音声生成を待たずに次の処理へ進む
-      this.voiceManager.speak(content, characterType).catch((error) => {
+      // 先行生成した音声を使用
+      const speakPromise = ttsPromise
+        ? this.voiceManager.speakWithPrepared(content, characterType, ttsPromise)
+        : this.voiceManager.speak(content, characterType);
+
+      speakPromise.catch((error) => {
         console.error('❌ 音声配信エラー:', error);
         // 音声配信の失敗はテキストメッセージの送信を妨げない
       });
@@ -247,46 +259,13 @@ export class BotManager {
     try {
       console.log(`🤔 ${characterType} が考え中...`);
       
-      // 会話品質スコアを計算
       const recentMessages = this.conversationHistory.getRecent(10);
-      const qualityScore = ConversationQualityAnalyzer.calculateQualityScore(recentMessages);
-      const conversationState = ConversationQualityAnalyzer.evaluateConversationState(qualityScore, recentMessages);
-
-      // 📊 会話評価をログ出力
-      console.log(`\n📊 【会話評価】`);
-      console.log(`   品質スコア: ${(qualityScore * 100).toFixed(1)}%`);
-      const stateLabel = conversationState === 'opening' ? '🌟 会話開始' 
-        : conversationState === 'connected' ? '✅ つながっている' 
-        : conversationState === 'stagnant' ? '⚠️ 停滞' 
-        : '🔴 断絶';
-      console.log(`   会話状態: ${stateLabel}`);
-
-      // 次の発言者を事前に決定
-      const nextSpeaker = this.selectNextCharacter(characterType);
-      console.log(`   次の発言者: ${nextSpeaker}\n`);
-
-      // プロンプト構築
-      let prompt = PromptBuilder.buildConversationPrompt(
+      const generatedText = await this.generateMessageText(
         characterType,
         recentMessages,
-        nextSpeaker,
         theme,
-        botConfig.kerokoPersonality
+        true
       );
-
-      // テーマコンテキストを適用 + 会話状態をプロンプトに含める
-      if (this.themeContextSession) {
-        prompt = this.themeContextSession.expandPrompt(prompt);
-        
-        // 会話状態に応じた制御句を追加
-        const controlPrompt = ConversationQualityAnalyzer.getControlPrompt(conversationState);
-        console.log(`🎯 【制御プロンプト】`);
-        console.log(`   ${controlPrompt.split('\n').join('\n   ')}\n`);
-        prompt += `\n\n【会話状態制御】\n${controlPrompt}`;
-      }
-
-      // LLMで生成（maxTokens指定なし = 設定ファイルのデフォルト値を使用）
-      const generatedText = await this.ollamaClient.generate(prompt);
 
       // キャンセルフラグが立ったら結果を破棄
       if (this.shouldCancelGeneration) {
@@ -308,40 +287,7 @@ export class BotManager {
       // ターンカウンターを増やす
       this.conversationTurnCount++;
       
-      // 品質スコアベースでシナリオを動的に更新
-      if (this.themeContextSession) {
-        const updated = await this.themeContextSession.updateScenarioIfNeeded(recentMessages);
-        if (updated) {
-          const sessionInfo = this.themeContextSession.getSessionInfo();
-          console.log(`\n🔄 【シナリオ更新完了】`);
-          console.log(`   更新回数: ${sessionInfo.updateCount}回`);
-          console.log(`   前回更新からのターン数: ${sessionInfo.turnsSinceLastUpdate}\n`);
-        }
-      }
-      
-      // 会話履歴が50個に達したらレポート生成
-      if (this.conversationHistory.getCount() >= this.REPORT_THRESHOLD) {
-        console.log(`\n📚 会話履歴が${this.REPORT_THRESHOLD}個に達しました。日報を生成します...\n`);
-        
-        // レポート生成前にうさこから終了メッセージを送信（音声は並列実行）
-        const closingMessage = '今日はここまで...';
-        await this.sendMessage('usako', closingMessage);
-        this.conversationHistory.addMessage('usako', closingMessage);
-        
-        // セッションをクローズ
-        if (this.themeContextSession) {
-          this.themeContextSession.close();
-          this.themeContextSession = null;
-        }
-        
-        // レポート生成を非同期で実行（awaitなし）
-        this.generateDailyReports().catch((error) => {
-          console.error('❌ 日報生成エラー:', error);
-        });
-        
-        // レポート生成を待たずに会話を停止
-        this.stopAutonomousConversation();
-      }
+      await this.handleReportThreshold();
       
       return true;
 
@@ -421,9 +367,14 @@ export class BotManager {
       this.conversationHistory.addMessage('usako', initialMessage);
       await this.sleep(2000);
     } else if (this.themeContextSession) {
-      // シナリオが生成されている場合、うさこが最初に発言
+      // シナリオが生成されている場合、バッチ生成して先頭を送信
       console.log('💬 シナリオに基づいて会話を開始します...\n');
-      await this.generateAndSendMessage('usako');
+      lastSpeaker = await this.generateBatchMessages(lastSpeaker);
+      const first = this.batchQueue.shift();
+      if (first) {
+        await this.sendMessage(first.characterType, first.content);
+        this.conversationHistory.addMessage(first.characterType, first.content);
+      }
       await this.sleep(2000);
     } else {
       console.log('⚠️ テーマもinitialMessageも指定されていません');
@@ -437,6 +388,7 @@ export class BotManager {
           const { username, content } = this.humanInterventionData;
           this.conversationHistory.addMessage('usako', content, true);
           this.humanInterventionData = null;
+          this.batchQueue = [];
           
           // 少し待機してから次のキャラクターに発言させる
           await this.sleep(2000);
@@ -457,6 +409,7 @@ export class BotManager {
         const recovery = this.errorRecoveryManager.getRecoveryAction();
         if (recovery.action !== 'retry') {
           console.log(`\n🔄 エラー復旧: [${recovery.description}]`);
+          this.batchQueue = [];
           
           if (recovery.waitMs > 0) {
             console.log(`⏳ ${recovery.waitMs}ms 待機中...`);
@@ -481,17 +434,21 @@ export class BotManager {
           }
         }
 
-        // 前回話したキャラクター以外からランダムに選択
-        const nextCharacter = this.selectNextCharacter(lastSpeaker);
-        
-        // LLMで発言生成＆送信
-        await this.generateAndSendMessage(nextCharacter);
-        
-        // 次のために記憶
-        lastSpeaker = nextCharacter;
-        
-        // 少し待機（LLM生成時間が主な間隔になる）
-        await this.sleep(1500);
+        // キューが空ならまとめて生成
+        // 会話ストックが少なくなったらまとめて生成
+        if (this.batchQueue.length <= this.BATCH_LOW_WATERMARK) {
+          lastSpeaker = await this.generateBatchMessages(lastSpeaker);
+        }
+
+        const nextItem = this.batchQueue.shift();
+        if (nextItem) {
+          await this.sendMessage(nextItem.characterType, nextItem.content);
+          this.conversationHistory.addMessage(nextItem.characterType, nextItem.content);
+          await this.handleReportThreshold();
+        }
+
+        // 5分ごとに配信
+        await this.sleep(this.BATCH_INTERVAL_MS);
         
       } catch (error) {
         console.error('❌ 自律会話中にエラーが発生:', error);
@@ -524,6 +481,189 @@ export class BotManager {
     // ランダムに選択
     const randomIndex = Math.floor(Math.random() * candidates.length);
     return candidates[randomIndex];
+  }
+
+  /**
+   * 発言テキストを生成（送信はしない）
+   */
+  private async generateMessageText(
+    characterType: CharacterType,
+    recentMessages: ConversationMessage[],
+    theme?: string,
+    enableScenarioUpdate: boolean = true
+  ): Promise<string> {
+    // 会話品質スコアを計算
+    const qualityScore = ConversationQualityAnalyzer.calculateQualityScore(recentMessages);
+    const conversationState = ConversationQualityAnalyzer.evaluateConversationState(qualityScore, recentMessages);
+
+    // 📊 会話評価をログ出力
+    console.log(`\n📊 【会話評価】`);
+    console.log(`   品質スコア: ${(qualityScore * 100).toFixed(1)}%`);
+    const stateLabel = conversationState === 'opening' ? '🌟 会話開始'
+      : conversationState === 'connected' ? '✅ つながっている'
+      : conversationState === 'stagnant' ? '⚠️ 停滞'
+      : '🔴 断絶';
+    console.log(`   会話状態: ${stateLabel}`);
+
+    // 次の発言者を事前に決定
+    const nextSpeaker = this.selectNextCharacter(characterType);
+    console.log(`   次の発言者: ${nextSpeaker}\n`);
+
+    // プロンプト構築
+    let prompt = PromptBuilder.buildConversationPrompt(
+      characterType,
+      recentMessages,
+      nextSpeaker,
+      theme,
+      botConfig.kerokoPersonality
+    );
+
+    // テーマコンテキストを適用 + 会話状態をプロンプトに含める
+    if (this.themeContextSession) {
+      prompt = this.themeContextSession.expandPrompt(prompt);
+
+      const controlPrompt = ConversationQualityAnalyzer.getControlPrompt(conversationState);
+      console.log(`🎯 【制御プロンプト】`);
+      console.log(`   ${controlPrompt.split('\n').join('\n   ')}\n`);
+      prompt += `\n\n【会話状態制御】\n${controlPrompt}`;
+    }
+
+    const generatedText = await this.ollamaClient.generate(prompt);
+
+    if (enableScenarioUpdate && this.themeContextSession) {
+      const updated = await this.themeContextSession.updateScenarioIfNeeded(recentMessages);
+      if (updated) {
+        const sessionInfo = this.themeContextSession.getSessionInfo();
+        console.log(`\n🔄 【シナリオ更新完了】`);
+        console.log(`   更新回数: ${sessionInfo.updateCount}回`);
+        console.log(`   前回更新からのターン数: ${sessionInfo.turnsSinceLastUpdate}\n`);
+      }
+    }
+
+    return generatedText;
+  }
+
+  /**
+   * バッチで複数発言を生成してキューに積む
+   */
+  private async generateBatchMessages(lastSpeaker: CharacterType): Promise<CharacterType> {
+    const recentMessages = this.conversationHistory.getRecent(10);
+    let prompt = PromptBuilder.buildBatchConversationPrompt(
+      recentMessages,
+      botConfig.kerokoPersonality,
+      this.BATCH_SIZE
+    );
+
+    if (this.themeContextSession) {
+      prompt = this.themeContextSession.expandPrompt(prompt);
+    }
+
+    try {
+      console.log(`🤔 バッチで会話を生成中... (${this.BATCH_SIZE}件)`);
+      const batchText = await this.ollamaClient.generate(prompt);
+      const parsed = this.parseBatchOutput(batchText);
+      console.log(`✅ バッチ解析結果: ${parsed.length}件`);
+
+      if (parsed.length === 0) {
+        throw new Error('バッチ出力を解析できませんでした');
+      }
+
+      const fallbackMessages = {
+        usako: '...',
+        nekoko: 'えっと...何だっけ？',
+        keroko: 'すみません、少し考え中です。',
+      };
+
+      const tempHistory = [...recentMessages];
+      let currentSpeaker = lastSpeaker;
+
+      for (let i = 0; i < this.BATCH_SIZE; i += 1) {
+        const fallbackSpeaker = this.selectNextCharacter(currentSpeaker);
+        const item = parsed[i] || {
+          characterType: fallbackSpeaker,
+          content: fallbackMessages[fallbackSpeaker],
+        };
+
+        this.batchQueue.push(item);
+        tempHistory.push({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+          characterType: item.characterType,
+          content: item.content,
+          timestamp: new Date(),
+          isHuman: false,
+        });
+
+        currentSpeaker = item.characterType;
+        this.errorRecoveryManager.recordSuccess();
+        this.conversationTurnCount++;
+      }
+
+      return currentSpeaker;
+    } catch (error) {
+      console.error('❌ バッチ生成に失敗:', error);
+      this.errorRecoveryManager.recordFailure();
+
+      // 失敗時は従来のフォールバックを1件だけ積む
+      const fallback = '...';
+      this.batchQueue.push({ characterType: 'usako', content: fallback });
+      return 'usako';
+    }
+  }
+
+  /**
+   * バッチ出力を解析してキュー用データに変換
+   */
+  private parseBatchOutput(text: string): Array<{ characterType: CharacterType; content: string }> {
+    const lines = text
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+
+    const results: Array<{ characterType: CharacterType; content: string }> = [];
+    const regex = /^(usako|nekoko|keroko)\s*[:：]\s*(.+)$/i;
+
+    for (const line of lines) {
+      const match = line.match(regex);
+      if (!match) continue;
+
+      const rawType = match[1].toLowerCase();
+      if (rawType !== 'usako' && rawType !== 'nekoko' && rawType !== 'keroko') {
+        continue;
+      }
+
+      results.push({
+        characterType: rawType as CharacterType,
+        content: match[2].trim(),
+      });
+    }
+
+    return results;
+  }
+
+  /**
+   * レポート生成条件をチェック
+   */
+  private async handleReportThreshold(): Promise<void> {
+    if (this.conversationHistory.getCount() < botConfig.reportThreshold) {
+      return;
+    }
+
+    console.log(`\n📚 会話履歴が${botConfig.reportThreshold}個に達しました。日報を生成します...\n`);
+
+    const closingMessage = '今日はここまで...';
+    await this.sendMessage('usako', closingMessage);
+    this.conversationHistory.addMessage('usako', closingMessage);
+
+    if (this.themeContextSession) {
+      this.themeContextSession.close();
+      this.themeContextSession = null;
+    }
+
+    this.generateDailyReports().catch((error) => {
+      console.error('❌ 日報生成エラー:', error);
+    });
+
+    this.stopAutonomousConversation();
   }
 
   /**
