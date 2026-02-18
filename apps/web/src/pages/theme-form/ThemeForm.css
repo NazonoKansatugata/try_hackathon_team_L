@@ -108,6 +108,7 @@
   font-family: inherit;
   background-color: rgba(255, 255, 255, 0.6);
   transition: all 0.2s ease;
+  color: #1f2a44 !important
 }
 
 .form-group input:focus,
