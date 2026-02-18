@@ -8,7 +8,7 @@ import {
   entersState,
   VoiceConnectionStatus,
 } from '@discordjs/voice';
-import { VoiceChannel } from 'discord.js';
+import { VoiceChannel, Client } from 'discord.js';
 import { CharacterType, VoiceProfile } from '../types/index.js';
 import { TTSClient } from './ttsClient.js';
 import { Readable } from 'stream';
@@ -88,7 +88,7 @@ export class VoiceManager {
   /**
    * 音声チャンネルに接続
    */
-  async connect(voiceChannel: VoiceChannel): Promise<void> {
+  async connect(voiceChannel: VoiceChannel, client: Client): Promise<void> {
     if (this.connection) {
       console.log('⚠️ すでに音声チャンネルに接続済み');
       return;
@@ -98,11 +98,18 @@ export class VoiceManager {
       console.log(`🔊 音声チャンネルに接続: ${voiceChannel.name}`);
       console.log(`   チャンネルID: ${voiceChannel.id}`);
       console.log(`   サーバーID: ${voiceChannel.guild.id}`);
+      console.log(`   Bot: ${client.user?.tag}`);
+
+      // 各Botのクライアントからguildを取得してadapterCreatorを使用
+      const guild = client.guilds.cache.get(voiceChannel.guild.id);
+      if (!guild) {
+        throw new Error('ギルドが見つかりません');
+      }
 
       this.connection = joinVoiceChannel({
         channelId: voiceChannel.id,
         guildId: voiceChannel.guild.id,
-        adapterCreator: voiceChannel.guild.voiceAdapterCreator as any,
+        adapterCreator: guild.voiceAdapterCreator as any,
         selfDeaf: false,
         selfMute: false,
       });

@@ -9,7 +9,6 @@ import { ThemeContextFactory, ThemeContextSession } from '../llm/themeContextFac
 import { ReportPromptBuilder } from '../llm/reportPromptBuilder.js';
 import { ConversationQualityAnalyzer } from '../analysis/conversationQualityAnalyzer.js';
 import { ErrorRecoveryManager } from './errorRecoveryManager.js';
-import { VoiceManager } from '../tts/voiceManager.js';
 
 /**
  * 複数のBotを管理するマネージャークラス
@@ -20,9 +19,11 @@ export class BotManager {
   private isConversationActive: boolean = false;
   private conversationTurnCount: number = 0;
   private batchQueue: Array<{ characterType: CharacterType; content: string }> = [];
+  private voiceQueue: Array<{ characterType: CharacterType; content: string }> = [];  // 音声配信キュー
+  private shouldAddToVoiceQueue: boolean = true;  // 初期バッチ後に音声キューに追加開始
 
   private readonly BATCH_SIZE = 10;
-  private readonly BATCH_INTERVAL_MS = 5 * 60 * 1000;
+  private readonly BATCH_INTERVAL_MS = 5 * 60 * 1000;  // 5分間隔
   private readonly BATCH_LOW_WATERMARK = 3;
   private ollamaClient: OllamaClient;
   private conversationHistory: ConversationHistory;
@@ -31,17 +32,11 @@ export class BotManager {
   private isGenerating: boolean = false;
   private shouldCancelGeneration: boolean = false;
   private humanInterventionData: { username: string; content: string } | null = null;
-  private voiceManager: VoiceManager | null = null;
 
   constructor() {
     this.ollamaClient = new OllamaClient();
     this.conversationHistory = new ConversationHistory();
     this.errorRecoveryManager = new ErrorRecoveryManager();
-    
-    // TTS機能が有効な場合のみVoiceManagerを初期化
-    if (ttsConfig.enabled) {
-      this.voiceManager = new VoiceManager();
-    }
   }
 
   /**
@@ -85,7 +80,7 @@ export class BotManager {
       initializeFirebase();
       console.log('✅ Firebaseを初期化しました');
 
-      // うさこBotのみに人間のメッセージハンドラーを設定（重複防止）
+      // 人間のメッセージハンドラーを設定（重複防止）
       const usakoBot = this.bots.get('usako');
       if (usakoBot) {
         usakoBot.setOnHumanMessage((username, content, channelId) => {
@@ -94,9 +89,14 @@ export class BotManager {
         console.log('✅ 人間のメッセージハンドラーを設定しました（うさこBotのみ）');
       }
 
-      // 音声チャンネルに接続
-      if (this.voiceManager && voiceChannelConfig.enabled && voiceChannelConfig.channelId) {
-        await this.connectToVoiceChannel();
+      // 音声チャンネルに接続（TTS有効時はうさこBotのみを接続）
+      if (ttsConfig.enabled && voiceChannelConfig.enabled && voiceChannelConfig.channelId) {
+        const usakoBot = this.bots.get('usako');
+        if (usakoBot) {
+          console.log('🔊 うさこBotを音声チャンネルに接続中...');
+          await usakoBot.connectToVoiceChannel(botConfig.guildId, voiceChannelConfig.channelId);
+          console.log('✅ うさこBotの音声チャンネル接続が完了しました');
+        }
       }
 
     } catch (error) {
@@ -142,8 +142,9 @@ export class BotManager {
    * 人間のメッセージを処理
    */
   private async handleHumanMessage(username: string, content: string, channelId: string): Promise<void> {
-    // 対象チャンネルかどうか確認
-    if (channelId !== botConfig.channelId) {
+    // 対象チャンネルかどうか確認（ボイスチャンネルまたはテキストチャンネル）
+    const targetChannelId = voiceChannelConfig.channelId || botConfig.channelId;
+    if (channelId !== targetChannelId) {
       return;
     }
 
@@ -174,60 +175,9 @@ export class BotManager {
       return;
     }
 
-    // 送信前にTTSを先行生成
-    const ttsPromise = this.voiceManager && voiceChannelConfig.enabled
-      ? this.voiceManager.prepareSpeech(content, characterType)
-      : null;
-
-    // テキストメッセージを送信
-    await bot.sendMessage(botConfig.channelId, content);
-
-    // 音声でも配信（TTS有効時）- 並列実行（awaitなし）
-    if (this.voiceManager && voiceChannelConfig.enabled) {
-      // 先行生成した音声を使用
-      const speakPromise = ttsPromise
-        ? this.voiceManager.speakWithPrepared(content, characterType, ttsPromise)
-        : this.voiceManager.speak(content, characterType);
-
-      speakPromise.catch((error) => {
-        console.error('❌ 音声配信エラー:', error);
-        // 音声配信の失敗はテキストメッセージの送信を妨げない
-      });
-    }
-  }
-
-  /**
-   * 音声チャンネルに接続
-   */
-  private async connectToVoiceChannel(): Promise<void> {
-    if (!this.voiceManager) {
-      return;
-    }
-
-    try {
-      console.log('🔊 音声チャンネルに接続中...');
-
-      // うさこBotのクライアントを使用して音声チャンネルを取得
-      const usakoBot = this.bots.get('usako');
-      if (!usakoBot) {
-        throw new Error('うさこBotが見つかりません');
-      }
-
-      const client = usakoBot.getClient();
-      const guild = await client.guilds.fetch(botConfig.guildId);
-      const voiceChannel = await guild.channels.fetch(voiceChannelConfig.channelId);
-
-      if (!voiceChannel || !voiceChannel.isVoiceBased()) {
-        throw new Error('音声チャンネルが見つかりません');
-      }
-
-      // VoiceChannel型として扱う（StageChannelの可能性もあるが、VoiceManagerが対応）
-      await this.voiceManager.connect(voiceChannel as any);
-      console.log('✅ 音声チャンネル接続完了');
-    } catch (error) {
-      console.error('❌ 音声チャンネル接続エラー:', error);
-      console.warn('⚠️ 音声配信機能は無効化されます');
-    }
+    // テキストメッセージを送信（ボイスチャンネル優先、なければテキストチャンネル）
+    const targetChannelId = voiceChannelConfig.channelId || botConfig.channelId;
+    await bot.sendMessage(targetChannelId, content);
   }
 
 
@@ -279,8 +229,6 @@ export class BotManager {
       
       // ターンカウンターを増やす
       this.conversationTurnCount++;
-      
-      await this.handleReportThreshold();
       
       return true;
 
@@ -345,9 +293,13 @@ export class BotManager {
       }
       console.log();
       
-      // うさこがテーマをアナウンス
-      const announcement = `今日のテーマは...「${theme.title}」${theme.description}`;
-      await this.sendMessage('usako', announcement);
+      // うさこがテーマをアナウンス（音声キューには追加しない）
+      const announcement = `今日のテーマは...「${theme.title}」`;
+      const usakoBot = this.bots.get('usako');
+      if (usakoBot) {
+        const targetChannelId = voiceChannelConfig.channelId || botConfig.channelId;
+        await usakoBot.sendMessage(targetChannelId, announcement);
+      }
       this.conversationHistory.addMessage('usako', announcement);
       await this.sleep(3000);
       
@@ -374,6 +326,8 @@ export class BotManager {
         await this.sendMessage(first.characterType, first.content);
         this.conversationHistory.addMessage(first.characterType, first.content);
       }
+      // 初期バッチ生成後、以降の音声キューへの追加を開始
+      this.shouldAddToVoiceQueue = true;
       await this.sleep(2000);
     } else {
       console.log('⚠️ テーマもinitialMessageも指定されていません');
@@ -387,7 +341,8 @@ export class BotManager {
           const { username, content } = this.humanInterventionData;
           this.conversationHistory.addMessage('usako', content, true);
           this.humanInterventionData = null;
-          this.batchQueue = [];
+          this.batchQueue = [];  // テキストキューをクリア
+          this.voiceQueue = [];   // 音声キューもクリア
           
           // 少し待機してから次のキャラクターに発言させる
           await this.sleep(2000);
@@ -408,7 +363,8 @@ export class BotManager {
         const recovery = this.errorRecoveryManager.getRecoveryAction();
         if (recovery.action !== 'retry') {
           console.log(`\n🔄 エラー復旧: [${recovery.description}]`);
-          this.batchQueue = [];
+          this.batchQueue = [];   // テキストキューをクリア
+          this.voiceQueue = [];    // 音声キューもクリア
           
           if (recovery.waitMs > 0) {
             console.log(`⏳ ${recovery.waitMs}ms 待機中...`);
@@ -433,21 +389,49 @@ export class BotManager {
           }
         }
 
-        // キューが空ならまとめて生成
-        // 会話ストックが少なくなったらまとめて生成
-        if (this.batchQueue.length <= this.BATCH_LOW_WATERMARK) {
-          lastSpeaker = await this.generateBatchMessages(lastSpeaker);
-        }
-
+        // 1件送信
         const nextItem = this.batchQueue.shift();
+        const voiceItem = this.shouldAddToVoiceQueue ? this.voiceQueue.shift() : null;
         if (nextItem) {
-          await this.sendMessage(nextItem.characterType, nextItem.content);
+          console.log(`💬 [${nextItem.characterType}] キューから取り出して送信 (残り: ${this.batchQueue.length}件)`);
+          // テキストメッセージを送信
+          const bot = this.getBot(nextItem.characterType);
+          if (bot) {
+            const targetChannelId = voiceChannelConfig.channelId || botConfig.channelId;
+            await bot.sendMessage(targetChannelId, nextItem.content);
+          }
           this.conversationHistory.addMessage(nextItem.characterType, nextItem.content);
-          await this.handleReportThreshold();
+          
+          // 音声配信（テキストと同時）
+          if (ttsConfig.enabled && voiceChannelConfig.enabled && voiceItem) {
+            const usakoBot = this.bots.get('usako');
+            if (usakoBot) {
+              usakoBot.speak(voiceItem.content, voiceItem.characterType).catch((error) => {
+                console.error('❌ 音声配信エラー:', error);
+              });
+            }
+          }
         }
 
-        // 5分ごとに配信
+        // 5分待機
+        console.log(`⏳ 次のメッセージまで 5分 待機します`);
         await this.sleep(this.BATCH_INTERVAL_MS);
+
+        // 待機後、キューが少なくなったらまとめて生成
+        if (this.batchQueue.length <= this.BATCH_LOW_WATERMARK) {
+          console.log(`📦 キューが${this.batchQueue.length}件まで減少。バッチ生成を開始...`);
+          lastSpeaker = await this.generateBatchMessages(lastSpeaker);
+          
+          // 生成されたバッチを音声キューにも追加
+          if (this.shouldAddToVoiceQueue) {
+            for (const item of this.batchQueue) {
+              this.voiceQueue.push(item);
+            }
+            console.log(`🔊 音声キューに${this.batchQueue.length}件の音声を追加しました`);
+          }
+          
+          console.log(`📦 バッチ生成完了。キューに${this.batchQueue.length}件の発言を追加しました`);
+        }
         
       } catch (error) {
         console.error('❌ 自律会話中にエラーが発生:', error);
@@ -584,6 +568,12 @@ export class BotManager {
         };
 
         this.batchQueue.push(item);
+        
+        // 初期バッチ生成後は、同時に音声キューにも追加
+        if (this.shouldAddToVoiceQueue) {
+          this.voiceQueue.push(item);
+        }
+        
         tempHistory.push({
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
           characterType: item.characterType,
@@ -597,6 +587,10 @@ export class BotManager {
         this.conversationTurnCount++;
       }
 
+      if (this.shouldAddToVoiceQueue) {
+        console.log(`🔊 音声キューに${Math.min(this.BATCH_SIZE, parsed.length)}件の音声を追加しました`);
+      }
+      
       return currentSpeaker;
     } catch (error) {
       console.error('❌ バッチ生成に失敗:', error);
@@ -605,6 +599,9 @@ export class BotManager {
       // 失敗時は従来のフォールバックを1件だけ積む
       const fallback = '...';
       this.batchQueue.push({ characterType: 'usako', content: fallback });
+      if (this.shouldAddToVoiceQueue) {
+        this.voiceQueue.push({ characterType: 'usako', content: fallback });
+      }
       return 'usako';
     }
   }
@@ -679,6 +676,34 @@ export class BotManager {
   }
 
   /**
+   * 会話を終了してレポートを生成
+   */
+  async endConversationAndGenerateReport(): Promise<void> {
+    if (!this.isConversationActive) {
+      console.log('⚠️ 会話は既に停止しています。レポートのみ生成します。');
+      // 会話履歴がある場合はレポート生成
+      if (this.conversationHistory.getCount() > 0) {
+        await this.generateDailyReports();
+      }
+      return;
+    }
+
+    console.log('\n📚 会話を終了してレポートを生成します...\n');
+
+    const closingMessage = '今日はここまで...';
+    await this.sendMessage('usako', closingMessage);
+    this.conversationHistory.addMessage('usako', closingMessage);
+
+    if (this.themeContextSession) {
+      this.themeContextSession.close();
+      this.themeContextSession = null;
+    }
+
+    await this.generateDailyReports();
+    this.stopAutonomousConversation();
+  }
+
+  /**
    * 会話が進行中かどうか
    */
   isConversationRunning(): boolean {
@@ -692,11 +717,6 @@ export class BotManager {
     console.log('🛑 全Botをシャットダウン中...');
     this.isConversationActive = false;
     this.isRunning = false;
-
-    // 音声チャンネルから切断
-    if (this.voiceManager) {
-      this.voiceManager.disconnect();
-    }
 
     for (const bot of this.bots.values()) {
       await bot.shutdown();
