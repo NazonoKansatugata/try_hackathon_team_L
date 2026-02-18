@@ -594,7 +594,7 @@
 
 /* ポップアップ本体 */
 .tutorial-modal {
-  background: white;
+  background: var(--surface);
   width: 90%;
   max-width: 600px;
   border-radius: 20px;
@@ -605,6 +605,7 @@
   animation: popIn 0.3s forwards;
   max-height: 80vh;
   overflow-y: auto;
+  border: 1px solid var(--border-primary);
 }
 
 /* 閉じるボタン */
@@ -622,11 +623,11 @@
   padding: 0;              /* 一旦リセット */
   padding-bottom: 4px;     /* 下に4pxほど余白を追加（これで真ん中に見えます） */
   
-  background: white;
-  border: 2px solid #eee;
+  background: var(--surface);
+  border: 2px solid var(--line);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   
-  color: #666;
+  color: var(--ink-soft);
   font-size: 1.8rem;       /* 文字サイズ */
   font-family: Arial, sans-serif; /* ✨ 記号が真ん中にきやすいフォントを指定 */
   line-height: 1;          /* 行の高さを最小限に */
@@ -642,9 +643,10 @@
 
 /* ホバー時は変更なし */
 .close-tutorial-btn:hover {
-  background: #f9f9f9;
+  background: var(--surface-soft);
   transform: scale(1.1);
-  color: #333;
+  color: var(--ink);
+  background-color: var(--accent);
 }
 
 /* チュートリアルのコンテンツ */
@@ -653,6 +655,18 @@
   margin-bottom: 1.5rem;
   color: var(--ink);
   font-family: 'Shippori Mincho B1', serif;
+}
+
+.tutorial-step.secret {
+  background: var(--accent-soft);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px dashed var(--accent);
+}
+
+.tutorial-step.secret .step-number {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .tutorial-step {

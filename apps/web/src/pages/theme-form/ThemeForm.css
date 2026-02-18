@@ -2,13 +2,17 @@
 
 /* --- ページ全体のコンテナ --- */
 .theme-form-container {
+  /* デフォルト（ライトモード）の定義 */
   --ink: #1f2a44;
   --accent: #f39c12;
   --accent-2: #f6b23f;
   --accent-glow: rgba(243, 156, 18, 0.35);
   --surface-soft: #f7f5f1;
   --line: rgba(31, 42, 68, 0.12);
-
+  --input-bg: rgba(255, 255, 255, 0.6);
+  --input-focus-bg: #fff;
+  
+  /* ライトモードの背景 */
   background: radial-gradient(circle at 10% 10%, rgba(255, 220, 150, 0.35), transparent 45%),
     radial-gradient(circle at 90% 20%, rgba(162, 228, 241, 0.35), transparent 40%),
     linear-gradient(140deg, #fffaf0 0%, #f3f0e8 40%, #f8f5ef 100%);
@@ -19,17 +23,24 @@
   box-sizing: border-box;
   font-family: 'Zen Kaku Gothic New', sans-serif;
   color: var(--ink);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* ▼▼ ダークモード対応 ▼▼ */
+/* htmlタグなどに data-theme='dark' がついた時に適用されるスタイル */
+:root[data-theme='dark'] .theme-form-container {
+  --ink: #e6eefc;           /* 文字色を白っぽく */
+  --line: rgba(255, 255, 255, 0.2);
+  --input-bg: rgba(20, 30, 50, 0.6); /* 入力欄の背景を暗く */
+  --input-focus-bg: #1a2639;
+  
+  /* ダークモードの背景（うさこテーマに合わせた濃い紺色） */
+  background: radial-gradient(circle at 50% 0%, #2b3a55 0%, #1a202c 100%);
 }
 
 /* --- コンテンツ部分 --- */
 .theme-form-wrapper {
-
   background: transparent;
-  box-shadow: none;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
@@ -37,39 +48,36 @@
 
 /* --- タイトル --- */
 .theme-form-wrapper h1 {
-
   text-align: left;
   margin-bottom: 0.5rem;
   font-family: 'Shippori Mincho B1', serif;
   font-size: clamp(2rem, 4vw, 2.5rem);
   letter-spacing: 0.05em;
-  color: var(--ink);
+  color: var(--ink); /* 変数を使うことで自動切り替え */
 }
 
 .subtitle {
-
   text-align: left;
-  color: #3e4a61;
+  color: var(--ink); /* 色を固定せず変数に変更 */
+  opacity: 0.8;      /* 少し薄くする */
   margin-bottom: 3rem;
   font-size: 1rem;
 }
 
 /* --- メッセージ --- */
 .error-message {
-
-  background-color: #fff2f0;
+  background-color: rgba(255, 242, 240, 0.9);
   border: 1px solid #ffccc7;
-  color: #ff4d4f;
+  color: #d32f2f;
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 2rem;
 }
 
 .success-message {
-
-  background-color: #f6ffed;
+  background-color: rgba(246, 255, 237, 0.9);
   border: 1px solid #b7eb8f;
-  color: #52c41a;
+  color: #388e3c;
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 2rem;
@@ -77,60 +85,59 @@
 
 /* --- フォーム --- */
 .theme-form {
-
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
 .form-group {
-
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
 .form-group label {
-
   color: var(--ink);
   font-weight: 700;
   font-size: 1.1rem;
 }
 
+/* 入力フィールドのデザイン */
 .form-group input,
 .form-group textarea,
 .form-group select {
-
   padding: 1rem;
   border: 2px solid var(--line);
   border-radius: 12px;
   font-size: 1rem;
   font-family: inherit;
-  background-color: rgba(255, 255, 255, 0.6);
+  
+  /* 変数化した背景色と文字色 */
+  background-color: var(--input-bg);
+  color: var(--ink); 
+  
   transition: all 0.2s ease;
-  color: #1f2a44 !important
 }
 
+/* フォーカス時 */
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-
   outline: none;
   border-color: var(--accent);
-  background-color: #fff;
+  background-color: var(--input-focus-bg);
   box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .form-group small {
-
-  color: #666;
+  color: var(--ink);
+  opacity: 0.7;
   font-size: 0.85rem;
   margin-top: 0.2rem;
 }
 
 /* --- ボタン --- */
 .form-actions {
-
   display: flex;
   gap: 1.5rem;
   margin-top: 2rem;
@@ -138,7 +145,6 @@
 
 .btn-submit,
 .btn-cancel {
-
   padding: 1rem 2rem;
   border: none;
   border-radius: 50px;
@@ -150,20 +156,17 @@
 }
 
 .btn-submit {
-
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #fff;
   box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .btn-submit:hover:not(:disabled) {
-
   transform: translateY(-2px);
   box-shadow: 0 8px 20px var(--accent-glow);
 }
 
 .btn-submit:disabled {
-
   opacity: 0.6;
   cursor: not-allowed;
   background: #ccc;
@@ -171,21 +174,19 @@
 }
 
 .btn-cancel {
-
   background-color: transparent;
-  color: #3e4a61;
+  color: var(--ink);
   border: 2px solid var(--line);
+  opacity: 0.8;
 }
 
 .btn-cancel:hover {
-
-  background-color: rgba(31, 42, 68, 0.05);
-  color: var(--ink);
+  background-color: rgba(128, 128, 128, 0.1);
+  opacity: 1;
 }
 
 /* --- スマホ対応 --- */
 @media (max-width: 600px) {
-
   .theme-form-container {
     padding: 1.5rem;
   }
