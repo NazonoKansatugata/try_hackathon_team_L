@@ -1,51 +1,197 @@
-:root {
-  --color-usako: #ffdde1;
-  --color-usako-accent: #ee9ca7;
-  --color-nekoko: #fce38a;
-  --color-nekoko-accent: #f38181;
-  --color-keroko: #d4fc79;
-  --color-keroko-accent: #96e6a1;
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;600;700&display=swap');
+
+.character-reports {
+  --ink: #1f2a44;
+  --ink-soft: #3e4a61;
+  --accent: #f39c12;
+  --accent-2: #f6b23f;
+  --accent-ink: #8a4a0f;
+  --accent-soft: rgba(243, 156, 18, 0.18);
+  --accent-border: rgba(243, 156, 18, 0.3);
+  --accent-glow: rgba(243, 156, 18, 0.35);
+  --accent-tint: #fff6e6;
+  --surface: #ffffff;
+  --surface-soft: #f7f5f1;
+  --line: rgba(31, 42, 68, 0.12);
+
+  padding: 2.5rem 2.5rem 3rem;
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+
+  background:
+    radial-gradient(circle at 10% 10%, rgba(255, 220, 150, 0.35), transparent 45%),
+    radial-gradient(circle at 90% 20%, rgba(162, 228, 241, 0.35), transparent 40%),
+    linear-gradient(140deg, #fffaf0 0%, #f3f0e8 40%, #f8f5ef 100%);
+
+  font-family: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  color: var(--ink);
 }
 
-/* キャラごとの動的クラス用 */
-.theme-usako { --bg-color: var(--color-usako); --accent-color: var(--color-usako-accent); }
-.theme-nekoko { --bg-color: var(--color-nekoko); --accent-color: var(--color-nekoko-accent); }
-.theme-keroko { --bg-color: var(--color-keroko); --accent-color: var(--color-keroko-accent); }
+/* themes */
 
-/* タブナビゲーション */
+.character-reports[data-theme='usako'] {
+  --accent: #69c7e8;
+  --accent-2: #9fe3f5;
+  --accent-ink: #1e6f86;
+  --accent-soft: rgba(105, 199, 232, 0.2);
+  --accent-border: rgba(105, 199, 232, 0.45);
+  --accent-glow: rgba(105, 199, 232, 0.35);
+  --accent-tint: #e9f7ff;
+}
+
+.character-reports[data-theme='nekoko'] {
+  --accent: #f39c12;
+  --accent-2: #f6b23f;
+  --accent-ink: #8a4a0f;
+  --accent-soft: rgba(243, 156, 18, 0.18);
+  --accent-border: rgba(243, 156, 18, 0.3);
+  --accent-glow: rgba(243, 156, 18, 0.35);
+  --accent-tint: #fff6e6;
+}
+
+.character-reports[data-theme='keroko'] {
+  --accent: #9bd64c;
+  --accent-2: #c7e889;
+  --accent-ink: #3f6f1f;
+  --accent-soft: rgba(155, 214, 76, 0.2);
+  --accent-border: rgba(155, 214, 76, 0.45);
+  --accent-glow: rgba(155, 214, 76, 0.35);
+  --accent-tint: #f2ffe6;
+}
+
+/* header */
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.title-block h1 {
+  margin: 0 0 0.5rem;
+  font-family: 'Shippori Mincho B1', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  font-size: clamp(2.1rem, 4vw, 2.9rem);
+  letter-spacing: 0.08em;
+}
+
+.eyebrow {
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  margin: 0 0 0.4rem;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ghost-btn {
+  text-decoration: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  border: 2px solid var(--accent-border);
+  color: var(--accent-ink);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.75);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.ghost-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px var(--accent-glow);
+}
+
+/* tabs */
+
 .char-tabs {
   display: flex;
+  justify-content: center;
   gap: 1rem;
   margin-bottom: 2rem;
-  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .char-tab {
-  padding: 0.5rem 1.5rem;
-  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
   text-decoration: none;
-  color: var(--text-secondary);
-  background: var(--bg-tertiary);
-  transition: all 0.2s;
-  font-weight: bold;
+  color: var(--ink-soft);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid transparent;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  font-weight: 600;
 }
 
 .char-tab.active {
-  background: var(--accent-color);
-  color: var(--text-inverse);
+  background: var(--accent-tint);
+  border-color: var(--accent-border);
+  color: var(--accent-ink);
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 20px var(--accent-glow);
 }
 
-/* 日記カードのデザイン変更 */
+.tab-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 10px rgba(31, 42, 68, 0.15);
+}
+
+/* reports */
+
+.report-section {
+  margin-top: 1.5rem;
+}
+
+.report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.report-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.report-count {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  padding: 0.2rem 0.8rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.report-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
 .report-entry {
-  background: var(--bg-card);
+  background: #fff;
   border: none;
-  border-left: 6px solid var(--accent-color);
-  border-radius: 4px 12px 12px 4px;
-  box-shadow: var(--shadow-sm);
-  padding: 1.5rem;
-  position: relative;
+  border-left: 6px solid var(--accent);
+  border-radius: 6px 16px 16px 6px;
+  box-shadow: 0 14px 30px rgba(31, 42, 68, 0.08);
+  padding: 1.6rem 1.7rem;
 }
 
 .report-meta {
@@ -53,14 +199,58 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
-  color: var(--text-muted);
-  font-size: 0.9rem;
+  color: #6c758f;
+  font-size: 0.95rem;
+}
+
+.report-content p {
+  margin: 0 0 0.8rem;
+  color: #30384f;
+  line-height: 1.7;
+}
+
+.report-content p:last-child {
+  margin-bottom: 0;
 }
 
 .message-badge {
-  background: var(--bg-tertiary);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 0.8rem;
-  color: var(--text-secondary);
+}
+
+/* states */
+
+.loading,
+.error,
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--ink-soft);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
+}
+
+/* responsive */
+
+@media (max-width: 960px) {
+  .hero-card {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .character-reports {
+    padding: 2rem 1.4rem 2.5rem;
+  }
+
+  .hero-card {
+    padding: 2rem 1.6rem;
+  }
 }

@@ -92,8 +92,14 @@ export class ConversationQualityAnalyzer {
    * 会話状態を判定
    */
   static evaluateConversationState(
-    qualityScore: number
-  ): 'connected' | 'stagnant' | 'disconnected' {
+    qualityScore: number,
+    recentMessages?: ConversationMessage[]
+  ): 'opening' | 'connected' | 'stagnant' | 'disconnected' {
+    // 会話開始状態の判定（履歴が3ターン未満）
+    if (recentMessages && recentMessages.length < 3) {
+      return 'opening';
+    }
+
     if (qualityScore > 0.7) return 'connected';
     if (qualityScore < 0.4) return 'disconnected';
     return 'stagnant';
@@ -136,8 +142,12 @@ export class ConversationQualityAnalyzer {
   /**
    * 会話状態に応じたプロンプト制御句を生成
    */
-  static getControlPrompt(state: 'connected' | 'stagnant' | 'disconnected'): string {
+  static getControlPrompt(state: 'opening' | 'connected' | 'stagnant' | 'disconnected'): string {
     const prompts = {
+      opening: `これは会話の始まりです。
+物語の場面を自然に切り出し、テーマの世界を3人が体験していく流れを作ってください。
+3人それぞれの視点や反応を最初から活かし、物語への引き込みを大切にしてください。`,
+
       connected: `会話は自然につながっています。
 無理に話題を変えず、今の流れを尊重して関係性を少し深めてください。`,
 

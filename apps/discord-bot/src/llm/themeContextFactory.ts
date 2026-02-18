@@ -65,7 +65,7 @@ export class ThemeContextSession {
     );
 
     if (shouldUpdate) {
-      const state = ConversationQualityAnalyzer.evaluateConversationState(qualityScore);
+      const state = ConversationQualityAnalyzer.evaluateConversationState(qualityScore, recentMessages);
       console.log(`\n🔄 シナリオ更新を開始します...`);
       console.log(`   理由: ${state} 状態を検出`);
 
@@ -100,10 +100,12 @@ export class ThemeContextSession {
   /**
    * 会話状態に応じたプロンプト制御を取得
    */
-  getStateControlledPrompt(): string {
-    // デフォルトは connected の制御句を返す
-    // BotManager側で品質を計算してから渡すことを推奨
-    return ConversationQualityAnalyzer.getControlPrompt('connected');
+  getStateControlledPrompt(recentMessages: ConversationMessage[]): string {
+    // 会話履歴から状態を判定
+    const qualityScore = ConversationQualityAnalyzer.calculateQualityScore(recentMessages);
+    const state = ConversationQualityAnalyzer.evaluateConversationState(qualityScore, recentMessages);
+    
+    return ConversationQualityAnalyzer.getControlPrompt(state);
   }
 
   /**

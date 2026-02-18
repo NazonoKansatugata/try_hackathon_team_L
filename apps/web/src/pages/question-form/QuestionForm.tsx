@@ -4,37 +4,10 @@ import { getAllQuestions } from '../admin/fetchData';
 import type { Question } from '../../types';
 import './QuestionForm.css';
 
+const DEFAULT_PROBLEMS: (Question & { id: string })[] = [];
+
 function QuestionForm() {
   const navigate = useNavigate();
-
-  // 複数問題を配列で管理（うさこに関する〇×問題）
-  const defaultProblems = [
-    {
-      id: 'default-1',
-      questionText: 'うさこは夜により活動的で、昼は控えめに過ごす傾向がある。',
-      questionAnswer: 'o',
-    },
-    {
-      id: 'default-2',
-      questionText: 'うさこは人前で積極的に話すタイプである。',
-      questionAnswer: 'o',
-    },
-    {
-      id: 'default-3',
-      questionText: 'うさこは甘いものが好きで、よくお菓子を食べる。',
-      questionAnswer: 'o',
-    },
-    {
-      id: 'default-4',
-      questionText: 'うさこは他人の秘密を守ることができる。',
-      questionAnswer: 'o',
-    },
-    {
-      id: 'default-5',
-      questionText: 'うさこの見た目は、他のキャラクターと比べてより個性的である。',
-      questionAnswer: 'o',
-    },
-  ];
 
   const [problems, setProblems] = useState<(Question & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +24,7 @@ function QuestionForm() {
     return shuffled;
   };
 
-  // Firestore から問題をロードして、ランダムに5問選出
+  // Firestore から問題をロードして、ランダムに20問選出
   useEffect(() => {
     const loadProblems = async () => {
       try {
@@ -59,21 +32,21 @@ function QuestionForm() {
         
         // 問題が登録されているかチェック
         if (questions && questions.length > 0) {
-          // 5問以上あればランダムに5問選出、5問未満は全部使用
-          const numToSelect = Math.min(5, questions.length);
+          // 20問以上あればランダムに20問選出、20問未満は全部使用
+          const numToSelect = Math.min(20, questions.length);
           const shuffled = shuffleArray(questions);
           const selected = shuffled.slice(0, numToSelect);
           setProblems(selected as (Question & { id: string })[]);
         } else {
           // フォールバック：デフォルト問題を使用
           console.warn('登録済み問題がないため、デフォルト問題を使用します');
-          const shuffled = shuffleArray(defaultProblems);
+          const shuffled = shuffleArray(DEFAULT_PROBLEMS);
           setProblems(shuffled);
         }
       } catch (error) {
         console.error('問題の読み込みに失敗しました', error);
         // エラー時もデフォルト問題を使用
-        const shuffled = shuffleArray(defaultProblems);
+        const shuffled = shuffleArray(DEFAULT_PROBLEMS);
         setProblems(shuffled);
       } finally {
         setLoading(false);

@@ -64,10 +64,19 @@
 
 .nav-buttons-top {
   display: flex;
+  justify-content: space-between;
   gap: 1rem;
-  justify-content: flex-end;
   margin-bottom: 2rem;
   margin-right: 0.5rem;
+}
+
+.nav-button-top > :first-child {
+  margin-right: auto;
+}
+
+.nav-right-group {
+  display: flex;
+  gap: 1rem;
 }
 
 .question-panel-btn,
@@ -565,4 +574,139 @@
   100% {
     transform: rotate(360deg);
   }
+}
+
+/* 背景の黒い膜 */
+.tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* 最前面に表示 */
+  opacity: 0;
+  animation: fadeIn 0.3s forwards;
+}
+
+/* ポップアップ本体 */
+.tutorial-modal {
+  background: white;
+  width: 90%;
+  max-width: 600px;
+  border-radius: 20px;
+  padding: 2rem;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  transform: scale(0.9);
+  animation: popIn 0.3s forwards;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* 閉じるボタン */
+.close-tutorial-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  
+  /* ✨ ここがポイント：下にクッションを入れて文字を上に持ち上げる */
+  padding: 0;              /* 一旦リセット */
+  padding-bottom: 4px;     /* 下に4pxほど余白を追加（これで真ん中に見えます） */
+  
+  background: white;
+  border: 2px solid #eee;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  
+  color: #666;
+  font-size: 1.8rem;       /* 文字サイズ */
+  font-family: Arial, sans-serif; /* ✨ 記号が真ん中にきやすいフォントを指定 */
+  line-height: 1;          /* 行の高さを最小限に */
+  
+  /* ど真ん中に配置する設定 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* ホバー時は変更なし */
+.close-tutorial-btn:hover {
+  background: #f9f9f9;
+  transform: scale(1.1);
+  color: #333;
+}
+
+/* チュートリアルのコンテンツ */
+.tutorial-content h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--ink);
+  font-family: 'Shippori Mincho B1', serif;
+}
+
+.tutorial-step {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: flex-start;
+}
+
+.step-number {
+  background: var(--accent);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.step-text h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.step-text p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+/* アニメーション */
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  to { transform: scale(1); }
+}
+
+/* チュートリアルを開くボタン */
+.tutorial-trigger-btn {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: stretch;
+  vertical-align: middle;
 }
