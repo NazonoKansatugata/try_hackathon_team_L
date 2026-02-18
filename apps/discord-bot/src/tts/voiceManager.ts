@@ -33,19 +33,19 @@ export class VoiceManager {
   // キャラクターごとの音声プロファイル（Qwen3-TTS CustomVoice対応）
   private readonly voiceProfiles: Record<CharacterType, VoiceProfile> = {
     usako: {
-      speaker: 'Vivian',      // 明るい若い女性 - うさこのキャラに最適
+      speaker: 'Serena',      // ミステリアスな女性の声
       language: 'Japanese',
-      instruct: '明るくポジティブな少女のように話してください',
+      instruct: 'ミステリアスで神秘的なアニメ少女のように、落ち着いた低めのトーンで話してください',
     },
     nekoko: {
-      speaker: 'Serena',      // 優しい若い女性 - ねここのキャラに最適
+      speaker: 'Vivian',      // 元気な女性の声
       language: 'Japanese',
-      instruct: '優しく穏やかな少女のように話してください',
+      instruct: '明るく元気いっぱいのアニメ少女のように、弾むような高めの声で話してください',
     },
     keroko: {
-      speaker: 'Ryan',        // ダイナミック男性 - けろこのキャラに最適
+      speaker: 'Serena',      // 控え目な女性の声
       language: 'Japanese',
-      instruct: 'やや低めで元気な男性らしく話してください',
+      instruct: '控え目で恥ずかしがり屋のアニメ少女のように、優しく小さめの声で話してください',
     },
   };
 

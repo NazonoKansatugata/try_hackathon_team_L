@@ -17,7 +17,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def generate_speech(text: str, speaker: str, language: str = "Japanese", output_path: str = None):
+def generate_speech(text: str, speaker: str, language: str = "Japanese", instruct: str = None, output_path: str = None):
     """
     テキストから音声を生成
     
@@ -25,6 +25,7 @@ def generate_speech(text: str, speaker: str, language: str = "Japanese", output_
         text: 話させるテキスト
         speaker: スピーカー名 (Vivian, Serena, Ryan など)
         language: 言語 ("Japanese", "English", "Auto" など)
+        instruct: 声の指示（話し方の特徴を指定）
         output_path: 出力WAVファイルパス
     
     Returns:
@@ -40,13 +41,18 @@ def generate_speech(text: str, speaker: str, language: str = "Japanese", output_
         )
         print(f"✅ モデルロード完了", file=sys.stderr)
         
+        # 音声生成パラメータ
+        generate_params = {
+            "text": text,
+            "language": language,
+            "speaker": speaker,
+        }
+        if instruct:
+            generate_params["instruct"] = instruct
+        
         # 音声生成
         print(f"🎤 音声生成中: {text[:50]}...", file=sys.stderr)
-        wavs, sr = model.generate_custom_voice(
-            text=text,
-            language=language,
-            speaker=speaker,
-        )
+        wavs, sr = model.generate_custom_voice(**generate_params)
         print(f"✅ 音声生成完了", file=sys.stderr)
         
         # ファイル保存（Windows対応、scipy使用）
@@ -81,12 +87,13 @@ def generate_speech(text: str, speaker: str, language: str = "Japanese", output_
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print(json.dumps({"status": "error", "error": "Usage: text speaker [language] [output_path]"}), file=sys.stderr)
+        print(json.dumps({"status": "error", "error": "Usage: text speaker [language] [instruct] [output_path]"}), file=sys.stderr)
         sys.exit(1)
     
     text = sys.argv[1]
     speaker = sys.argv[2]
     language = sys.argv[3] if len(sys.argv) > 3 else "Japanese"
-    output_path = sys.argv[4] if len(sys.argv) > 4 else None
+    instruct = sys.argv[4] if len(sys.argv) > 4 and sys.argv[4] != "none" else None
+    output_path = sys.argv[5] if len(sys.argv) > 5 else None
     
-    generate_speech(text, speaker, language, output_path)
+    generate_speech(text, speaker, language, instruct, output_path)

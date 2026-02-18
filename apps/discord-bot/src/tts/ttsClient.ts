@@ -47,6 +47,7 @@ export class TTSClient {
         text,
         voiceProfile.speaker,
         voiceProfile.language || 'Japanese',
+        voiceProfile.instruct || 'none',
       ];
       const { stdout, stderr } = await execFileAsync('python', args);
 

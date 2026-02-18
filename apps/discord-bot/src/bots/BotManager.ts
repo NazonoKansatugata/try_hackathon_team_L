@@ -223,14 +223,7 @@ export class BotManager {
 
       // VoiceChannel型として扱う（StageChannelの可能性もあるが、VoiceManagerが対応）
       await this.voiceManager.connect(voiceChannel as any);
-
-      // TTS接続テスト
-      const isTTSHealthy = await this.voiceManager.testTTSConnection();
-      if (!isTTSHealthy) {
-        console.warn('⚠️ TTS APIへの接続に失敗しました。音声配信は利用できません。');
-      } else {
-        console.log('✅ TTS APIに接続しました');
-      }
+      console.log('✅ 音声チャンネル接続完了');
     } catch (error) {
       console.error('❌ 音声チャンネル接続エラー:', error);
       console.warn('⚠️ 音声配信機能は無効化されます');
@@ -351,6 +344,12 @@ export class BotManager {
         console.log('   シナリオが生成されませんでした');
       }
       console.log();
+      
+      // うさこがテーマをアナウンス
+      const announcement = `今日のテーマは...「${theme.title}」${theme.description}`;
+      await this.sendMessage('usako', announcement);
+      this.conversationHistory.addMessage('usako', announcement);
+      await this.sleep(3000);
       
     } catch (error) {
       console.warn('⚠️ テーマ取得またはシナリオ生成に失敗しました:', error);
